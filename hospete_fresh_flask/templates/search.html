@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 16px;">
+  <div style="margin-bottom: 14px;">
+    <h2 style="font-size: 16px; font-weight: 800; color: #0f172a;">Search Results</h2>
+    {% if query %}
+      <p style="font-size: 12px; color: #64748b;">Showing results for "<strong>{{ query }}</strong>"</p>
+    {% endif %}
+  </div>
+
+  {% if products %}
+    <div class="products-grid-2col">
+      {% for prod in products %}
+      <div class="product-card">
+        <a href="/product/{{ prod['id'] }}" class="product-name-link">
+          <div class="card-image-box">
+            <img src="{{ prod['image_url'] }}" alt="{{ prod['name'] }}" loading="lazy">
+          </div>
+          <div class="card-body">
+            <span class="product-brand">{{ prod['brand'] }}</span>
+            <div class="product-name">{{ prod['name'] }}</div>
+            <div class="pack-size-label">{{ prod['pack_size'] }}</div>
+            <div class="price-row">
+              <span class="selling-price">₹{{ '%.0f'|format(prod['price']) }}</span>
+            </div>
+          </div>
+        </a>
+        <form action="/add-to-cart" method="POST" class="ajax-add-cart">
+          <input type="hidden" name="variant_id" value="{{ prod['default_variant_id'] }}">
+          <input type="hidden" name="qty" value="1">
+          <button type="submit" class="btn-add"><span>+</span> ADD</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 40px 20px;">
+      <div style="font-size: 36px; margin-bottom: 8px;">🔍</div>
+      <h3 style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">No groceries found</h3>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">Try searching for tomatoes, milk, mixture snacks, or rice.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
+        <a href="/search?q=Tomatoes" style="font-size: 11px; font-weight: 600; background: #ecfdf5; color: #16a34a; padding: 4px 10px; border-radius: 9999px; text-decoration: none;">Tomatoes</a>
+        <a href="/search?q=Nandini" style="font-size: 11px; font-weight: 600; background: #ecfdf5; color: #16a34a; padding: 4px 10px; border-radius: 9999px; text-decoration: none;">Nandini Milk</a>
+        <a href="/search?q=Mixture" style="font-size: 11px; font-weight: 600; background: #ecfdf5; color: #16a34a; padding: 4px 10px; border-radius: 9999px; text-decoration: none;">Mixture Snacks</a>
+        <a href="/search?q=Rice" style="font-size: 11px; font-weight: 600; background: #ecfdf5; color: #16a34a; padding: 4px 10px; border-radius: 9999px; text-decoration: none;">Sona Masoori Rice</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

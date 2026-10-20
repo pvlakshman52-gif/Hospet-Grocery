@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 30px 16px; text-align: center;">
+  <div style="width: 68px; height: 68px; background: #dcfce7; color: #16a34a; font-size: 36px; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+    ✓
+  </div>
+  <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">Order Placed Successfully!</h2>
+  <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Order ID: <strong>{{ order['order_number'] }}</strong></p>
+
+  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #16a34a; margin-bottom: 10px;">
+      <span>Status: {{ order['status'] }}</span>
+      <span>Arriving in ~20 mins</span>
+    </div>
+    <div style="font-size: 12px; color: #475569; margin-bottom: 6px;">
+      <strong>Deliver to:</strong> {{ order['customer_name'] }} ({{ order['phone'] }})
+    </div>
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
+      {{ order['delivery_address'] }}, {{ order['locality'] }}
+    </div>
+
+    <div style="border-top: 1px solid #f1f5f9; padding-top: 10px;">
+      <h4 style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px;">Items Ordered</h4>
+      {% for item in items %}
+      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+        <span>{{ item['quantity'] }}x {{ item['product_name'] }} ({{ item['pack_size'] }})</span>
+        <span style="font-weight: 600;">₹{{ '%.0f'|format(item['subtotal']) }}</span>
+      </div>
+      {% endfor %}
+      <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; border-top: 1px dashed #e2e8f0; padding-top: 8px; margin-top: 8px;">
+        <span>Total Paid</span>
+        <span style="color: #16a34a;">₹{{ '%.0f'|format(order['total_amount']) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 10px;">
+    <a href="/orders" class="btn-add" style="flex: 1; background-color: #f1f5f9 !important; color: #0f172a !important; border-color: #cbd5e1 !important;">View Orders</a>
+    <a href="/" class="btn-add" style="flex: 1;">Continue Shopping</a>
+  </div>
+</div>
+{% endblock %}

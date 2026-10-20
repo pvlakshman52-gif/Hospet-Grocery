@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- 3. FULL PROMOTIONAL GROCERY BANNER -->
+<section class="banner-section">
+  <div class="promo-banner-card">
+    <div>
+      <span class="banner-tag">🌟 Tungabhadra Harvest Fest</span>
+      <h2 class="banner-title">Flat 30% OFF on Fresh Farm Staples</h2>
+      <p class="banner-subtitle">Handpicked veggies, Nandini milk & fresh snacks delivered in 15 mins</p>
+    </div>
+    <div class="banner-cta-row">
+      <span class="banner-coupon">Code: <strong>HOSPETE30</strong></span>
+      <a href="/?shortcut=offers" class="banner-shop-btn">Claim Offer &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- 4. FOUR SHORTCUTS: Offers, Best Sellers, Fresh, Bulk Packs -->
+<div class="shortcuts-bar">
+  <a href="/?shortcut=offers" class="shortcut-item {% if active_shortcut == 'offers' %}active{% endif %}">
+    <span class="shortcut-icon">🏷️</span>
+    <span class="shortcut-label">Offers</span>
+  </a>
+  <a href="/?shortcut=bestsellers" class="shortcut-item {% if active_shortcut == 'bestsellers' %}active{% endif %}">
+    <span class="shortcut-icon">⭐</span>
+    <span class="shortcut-label">Best Sellers</span>
+  </a>
+  <a href="/?shortcut=fresh" class="shortcut-item {% if active_shortcut == 'fresh' %}active{% endif %}">
+    <span class="shortcut-icon">🥦</span>
+    <span class="shortcut-label">Fresh Farm</span>
+  </a>
+  <a href="/?shortcut=bulk" class="shortcut-item {% if active_shortcut == 'bulk' %}active{% endif %}">
+    <span class="shortcut-icon">📦</span>
+    <span class="shortcut-label">Bulk Packs</span>
+  </a>
+</div>
+
+<!-- 5 & 6. SHOP BY CATEGORY WITH "SEE ALL" & FOUR-COLUMN CATEGORY TILE GRID -->
+<section class="section-container" style="padding-top: 6px;">
+  <div class="section-header">
+    <h3 class="section-title">Shop by Category</h3>
+    <a href="/categories" class="section-see-all">See All &rarr;</a>
+  </div>
+  <div class="categories-grid-4col">
+    {% for cat in categories %}
+    <a href="/?category={{ cat['slug'] }}" class="category-tile">
+      <div class="cat-avatar-box" style="background-color: {{ cat['banner_color'] }};">
+        <span>{{ cat['icon_emoji'] }}</span>
+      </div>
+      <span class="cat-tile-name">{{ cat['name'] }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- 7. TODAY'S DEALS (Horizontal Scrollable Cards) -->
+{% if deals %}
+<section class="section-container">
+  <div class="section-header">
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <span style="font-size: 16px;">⚡</span>
+      <h3 class="section-title">Today’s Flash Deals</h3>
+    </div>
+    <span style="font-size: 11px; font-weight: 700; color: #dc2626; background: #fee2e2; padding: 2px 8px; border-radius: 9999px;">Ends in 3h 40m</span>
+  </div>
+  <div class="horizontal-deals-scroll">
+    {% for deal in deals %}
+    <div class="deal-card">
+      <span class="deal-badge">{{ deal['deal_tag'] or 'DEAL' }}</span>
+      <a href="/product/{{ deal['id'] }}" style="text-decoration: none;">
+        <div class="card-image-box" style="height: 100px; aspect-ratio: auto; margin-bottom: 6px;">
+          <img src="{{ deal['image_url'] }}" alt="{{ deal['name'] }}" loading="lazy">
+        </div>
+        <div class="product-name" style="font-size: 11px; height: 28px;">{{ deal['name'] }}</div>
+      </a>
+      <div class="pack-size-label">{{ deal['pack_size'] }}</div>
+      <div class="price-row" style="margin-bottom: 6px;">
+        <span class="selling-price" style="font-size: 13px;">₹{{ '%.0f'|format(deal['price']) }}</span>
+        <span class="mrp-price">₹{{ '%.0f'|format(deal['mrp']) }}</span>
+      </div>
+      <form action="/add-to-cart" method="POST" class="ajax-add-cart">
+        <input type="hidden" name="variant_id" value="{{ deal['default_variant_id'] }}">
+        <input type="hidden" name="qty" value="1">
+        <button type="submit" class="btn-add">
+          <span>+</span> ADD
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- 8. COMPACT GROCERY PRODUCT CARDS (2-Column Grid) -->
+<section class="section-container">
+  <div class="section-header">
+    <h3 class="section-title">
+      {% if selected_category %}
+        {{ selected_category|capitalize }} Products
+      {% elif active_shortcut != 'all' %}
+        {{ active_shortcut|capitalize }} Items
+      {% else %}
+        Daily Grocery Essentials
+      {% endif %}
+    </h3>
+    <span style="font-size: 11px; color: #64748b; font-weight: 600;">{{ products|length }} items</span>
+  </div>
+
+  <div class="products-grid-2col">
+    {% for prod in products %}
+    <div class="product-card">
+      {% if prod['discount_pct'] and prod['discount_pct'] > 0 %}
+        <span class="discount-tag">{{ prod['discount_pct']|int }}% OFF</span>
+      {% endif %}
+
+      <a href="/product/{{ prod['id'] }}" class="product-name-link">
+        <div class="card-image-box">
+          <img src="{{ prod['image_url'] }}" alt="{{ prod['name'] }}" loading="lazy">
+        </div>
+        <div class="card-body">
+          <span class="product-brand">{{ prod['brand'] }}</span>
+          <div class="product-name" title="{{ prod['name'] }}">{{ prod['name'] }}</div>
+          <div class="pack-size-label">{{ prod['pack_size'] }}</div>
+          <div class="price-row">
+            <span class="selling-price">₹{{ '%.0f'|format(prod['price']) }}</span>
+            {% if prod['mrp'] > prod['price'] %}
+              <span class="mrp-price">₹{{ '%.0f'|format(prod['mrp']) }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+
+      <!-- Add to Cart Form with solid Green Add Button -->
+      <form action="/add-to-cart" method="POST" class="ajax-add-cart">
+        <input type="hidden" name="variant_id" value="{{ prod['default_variant_id'] }}">
+        <input type="hidden" name="qty" value="1">
+        {% if prod['stock_qty'] <= 0 %}
+          <button type="button" class="btn-add disabled" disabled>Out of Stock</button>
+        {% else %}
+          <button type="submit" class="btn-add">
+            <span>+</span> ADD
+          </button>
+        {% endif %}
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% endblock %}

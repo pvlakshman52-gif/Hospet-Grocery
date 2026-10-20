@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 16px;">
+  <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Your Orders</h2>
+
+  {% if orders %}
+    {% for ord in orders %}
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div>
+          <span style="font-size: 13px; font-weight: 800; color: #0f172a;">{{ ord['order']['order_number'] }}</span>
+          <div style="font-size: 11px; color: #94a3b8;">{{ ord['order']['created_at'] }}</div>
+        </div>
+        <span style="font-size: 11px; font-weight: 700; background: #ecfdf5; color: #16a34a; border: 1px solid #bbf7d0; padding: 3px 8px; border-radius: 9999px;">
+          ● {{ ord['order']['status'] }}
+        </span>
+      </div>
+
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 8px;">
+        {% for itm in ord['items'] %}
+        <div style="font-size: 12px; color: #475569; margin-bottom: 3px; display: flex; justify-content: space-between;">
+          <span>{{ itm['quantity'] }}x {{ itm['product_name'] }} ({{ itm['pack_size'] }})</span>
+          <span style="font-weight: 600;">₹{{ '%.0f'|format(itm['subtotal']) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 8px; margin-top: 8px;">
+        <span style="font-size: 11px; color: #64748b;">Delivered to {{ ord['order']['locality'] }}</span>
+        <span style="font-size: 14px; font-weight: 800; color: #16a34a;">₹{{ '%.0f'|format(ord['order']['total_amount']) }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="text-align: center; padding: 50px 20px;">
+      <div style="font-size: 44px; margin-bottom: 8px;">📦</div>
+      <h3 style="font-size: 15px; font-weight: 700; color: #0f172a;">No past orders yet</h3>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">Your orders will show up here once placed.</p>
+      <a href="/" class="btn-add" style="display: inline-flex; width: auto; padding: 8px 20px; font-size: 12px;">Shop Now</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block portal_content %}
+<div style="margin-bottom: 24px;">
+  <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">Delivery Partner Fleet Console</h1>
+  <p style="font-size: 13px; color: #64748b;">Live dispatch, customer drop-off locations, and instant order state progression across Hospete.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+  {% for ord in orders %}
+  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <div>
+        <span style="font-size: 14px; font-weight: 800; color: #0f172a;">{{ ord['order']['order_number'] }}</span>
+        <div style="font-size: 11px; color: #94a3b8;">{{ ord['order']['created_at'] }}</div>
+      </div>
+      <span style="font-size: 11px; font-weight: 700; background: #ecfdf5; color: #16a34a; padding: 4px 10px; border-radius: 9999px;">
+        {{ ord['order']['status'] }}
+      </span>
+    </div>
+
+    <div style="background: #f8fafc; border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 12px;">
+      <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">{{ ord['order']['customer_name'] }} • {{ ord['order']['phone'] }}</div>
+      <div style="color: #475569;">📍 {{ ord['order']['delivery_address'] }}, {{ ord['order']['locality'] }}</div>
+      <div style="color: #16a34a; font-weight: 700; margin-top: 4px;">Collect: ₹{{ '%.0f'|format(ord['order']['total_amount']) }} ({{ ord['order']['payment_method'] }})</div>
+    </div>
+
+    <div style="font-size: 11px; color: #64748b; margin-bottom: 12px;">
+      <strong>Items:</strong>
+      {% for itm in ord['items'] %}
+        {{ itm['quantity'] }}x {{ itm['product_name'] }} ({{ itm['pack_size'] }}){% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- Status Progression Buttons -->
+    <form action="/delivery/update-status" method="POST" style="display: flex; gap: 8px;">
+      <input type="hidden" name="order_id" value="{{ ord['order']['id'] }}">
+      <button type="submit" name="status" value="Packed" class="btn-add" style="flex:1; height: 34px; font-size: 11px; background-color: #3b82f6 !important; border-color: #3b82f6 !important;">
+        Mark Packed
+      </button>
+      <button type="submit" name="status" value="Out for Delivery" class="btn-add" style="flex:1; height: 34px; font-size: 11px; background-color: #f59e0b !important; border-color: #f59e0b !important;">
+        Out for Delivery
+      </button>
+      <button type="submit" name="status" value="Delivered" class="btn-add" style="flex:1; height: 34px; font-size: 11px;">
+        Mark Delivered
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

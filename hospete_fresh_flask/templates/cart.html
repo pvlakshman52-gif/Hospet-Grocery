@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 16px 16px 24px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+    <h2 style="font-size: 18px; font-weight: 800; color: #0f172a;">Your Shopping Cart</h2>
+    <span style="font-size: 12px; font-weight: 700; color: #16a34a;">⚡ Delivering to {{ current_locality }}</span>
+  </div>
+
+  {% if cart %}
+    <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 16px;">
+      {% for v_id, item in cart.items() %}
+      <div class="cart-item-row">
+        <div class="cart-item-details">
+          <img src="{{ item['image_url'] }}" alt="{{ item['name'] }}" class="cart-item-thumb">
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: #0f172a;">{{ item['name'] }}</div>
+            <div style="font-size: 11px; color: #64748b;">{{ item['pack_size'] }}</div>
+            <div style="font-size: 13px; font-weight: 800; color: #16a34a; margin-top: 2px;">
+              ₹{{ '%.0f'|format(item['price']) }}
+              {% if item['mrp'] > item['price'] %}
+                <span style="font-size: 10px; color: #94a3b8; text-decoration: line-through;">₹{{ '%.0f'|format(item['mrp']) }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quantity Stepper -->
+        <div style="display: flex; align-items: center; background: #ecfdf5; border: 1px solid #bbf7d0; border-radius: 6px; overflow: hidden; height: 32px;">
+          <form action="/update-cart" method="POST" style="display:inline;">
+            <input type="hidden" name="variant_id" value="{{ v_id }}">
+            <input type="hidden" name="qty" value="{{ item['qty'] - 1 }}">
+            <button type="submit" style="background:none; border:none; padding: 0 8px; color: #15803d; font-weight: bold; font-size: 14px; cursor: pointer;">-</button>
+          </form>
+          <span style="font-size: 12px; font-weight: 700; color: #15803d; padding: 0 4px; min-width: 20px; text-align: center;">{{ item['qty'] }}</span>
+          <form action="/update-cart" method="POST" style="display:inline;">
+            <input type="hidden" name="variant_id" value="{{ v_id }}">
+            <input type="hidden" name="qty" value="{{ item['qty'] + 1 }}">
+            <button type="submit" style="background:none; border:none; padding: 0 8px; color: #15803d; font-weight: bold; font-size: 14px; cursor: pointer;">+</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Bill Summary -->
+    <div class="bill-card" style="margin: 0 0 20px;">
+      <h3 style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Bill Summary</h3>
+      <div class="bill-row">
+        <span>Items Subtotal</span>
+        <span>₹{{ '%.0f'|format(item_total) }}</span>
+      </div>
+      {% if savings > 0 %}
+      <div class="bill-row" style="color: #16a34a; font-weight: 600;">
+        <span>Total Savings</span>
+        <span>- ₹{{ '%.0f'|format(savings) }}</span>
+      </div>
+      {% endif %}
+      <div class="bill-row">
+        <span>Delivery Fee (Hospete Express)</span>
+        <span>
+          {% if delivery_fee == 0 %}
+            <span style="color: #16a34a; font-weight: 700;">FREE</span>
+          {% else %}
+            ₹{{ delivery_fee }}
+          {% endif %}
+        </span>
+      </div>
+      <div class="bill-row total">
+        <span>To Pay</span>
+        <span style="font-size: 17px; color: #15803d;">₹{{ '%.0f'|format(grand_total) }}</span>
+      </div>
+    </div>
+
+    <a href="/checkout" class="btn-add" style="height: 48px; font-size: 15px; border-radius: 10px; width: 100%;">
+      Proceed to Checkout &rarr;
+    </a>
+  {% else %}
+    <div style="text-align: center; padding: 60px 20px;">
+      <div style="font-size: 48px; margin-bottom: 12px;">🛒</div>
+      <h3 style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">Your cart is empty</h3>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 20px;">Add items to get farm-fresh groceries delivered in 20 minutes.</p>
+      <a href="/" class="btn-add" style="display: inline-flex; width: auto; padding: 10px 24px; font-size: 13px;">Start Shopping</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

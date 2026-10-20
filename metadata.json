@@ -1,0 +1,6 @@
+{
+  "name": "Hospete Fresh - Grocery Shopping App",
+  "description": "Clean, mobile-optimized grocery delivery app for Hospete with green add buttons, pack-size variants, multi-role views, and downloadable Flask project.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

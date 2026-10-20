@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 16px 16px 24px;">
+  <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Delivery Details</h2>
+
+  <form action="/checkout" method="POST">
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Full Name</label>
+        <input type="text" name="name" required placeholder="e.g. Ramesh Rao" value="Ramesh Rao" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Mobile Number</label>
+        <input type="tel" name="phone" required placeholder="10-digit number" value="9845012345" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Hospete Locality</label>
+        <select name="locality" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px; background: #fff;">
+          {% for loc in localities_list %}
+            <option value="{{ loc['name'] }}" {% if loc['name'] == current_locality %}selected{% endif %}>
+              {{ loc['name'] }} (Pin: {{ loc['pincode'] }} - {{ loc['eta_minutes'] }} mins)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Complete Street Address / Landmark</label>
+        <textarea name="address" rows="2" required placeholder="Flat / House No., Landmark..." style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 13px;">#14, 2nd Main, Near Lakshmi Temple</textarea>
+      </div>
+    </div>
+
+    <!-- Payment Mode -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+      <h3 style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Payment Method</h3>
+      <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; font-size: 13px; font-weight: 600;">
+        <input type="radio" name="payment_method" value="UPI / PhonePe / GPay" checked>
+        <span>⚡ UPI / PhonePe / Google Pay / QR</span>
+      </label>
+      <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 600;">
+        <input type="radio" name="payment_method" value="Cash on Delivery">
+        <span>💵 Cash on Delivery (COD)</span>
+      </label>
+    </div>
+
+    <!-- Order summary -->
+    <div class="bill-card" style="margin: 0 0 16px;">
+      <div class="bill-row">
+        <span>Items Total</span>
+        <span>₹{{ '%.0f'|format(item_total) }}</span>
+      </div>
+      <div class="bill-row">
+        <span>Delivery Charge</span>
+        <span>{% if delivery_fee == 0 %}FREE{% else %}₹{{ delivery_fee }}{% endif %}</span>
+      </div>
+      <div class="bill-row total">
+        <span>Total Payable</span>
+        <span style="color: #15803d;">₹{{ '%.0f'|format(grand_total) }}</span>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-add" style="height: 48px; font-size: 15px; border-radius: 10px; width: 100%;">
+      Confirm & Place Order &rarr;
+    </button>
+  </form>
+</div>
+{% endblock %}

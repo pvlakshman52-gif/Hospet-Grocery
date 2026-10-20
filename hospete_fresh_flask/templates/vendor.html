@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block portal_content %}
+<!-- White Header Card matching the visual reference -->
+<div class="vendor-header-card">
+  <div class="vendor-header-text">
+    <h1 class="vendor-title">Vendor Inventory & Stock Manager</h1>
+    <p class="vendor-subtitle">Real-time stock adjustment for Hospete farmers, dairy suppliers, and snacks makers.</p>
+  </div>
+  <a href="/" class="btn-test-store" title="Preview changes in the live customer storefront">
+    <span>Test in Mobile Store</span>
+    <span style="font-size: 16px; line-height: 1;">&rarr;</span>
+  </a>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div style="margin-bottom: 20px;">
+      {% for category, message in messages %}
+        <div class="vendor-flash-box flash-{{ category }}">
+          <span>{% if category == 'warning' %}⚠️{% elif category == 'error' %}❌{% else %}✅{% endif %}</span>
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Inventory Section: White rounded panel titled Product Variants & Stock Inventory -->
+<div class="vendor-panel-card">
+  <div class="vendor-panel-header">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h2 class="vendor-panel-title">Product Variants & Stock Inventory</h2>
+      <span class="vendor-variant-badge">{{ products|length }} variants</span>
+    </div>
+    <div style="font-size: 12px; color: #64748b;">
+      Click <strong>Set Out of Stock</strong> to instantly disable ordering in the customer app.
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vendor-inventory-table">
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Brand</th>
+          <th>Pack Size</th>
+          <th>Selling Price</th>
+          <th>MRP</th>
+          <th>Stock Units</th>
+          <th style="text-align: right; padding-right: 24px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr class="{% if p['stock_qty'] <= 0 %}row-out-of-stock{% endif %}">
+          <!-- 1. Product Name in bold -->
+          <td class="cell-product-name">
+            <strong>{{ p['name'] }}</strong>
+          </td>
+
+          <!-- 2. Brand in muted text -->
+          <td class="cell-brand">
+            {{ p['brand'] }}
+          </td>
+
+          <!-- 3. Pack Size -->
+          <td class="cell-pack-size">
+            <strong>{{ p['pack_size'] }}</strong>
+          </td>
+
+          <!-- 4. Selling Price in green -->
+          <td class="cell-selling-price">
+            ₹{{ '%.0f'|format(p['price']) }}
+          </td>
+
+          <!-- 5. MRP in muted strikethrough text -->
+          <td class="cell-mrp">
+            ₹{{ '%.0f'|format(p['mrp']) }}
+          </td>
+
+          <!-- 6. Stock Units -->
+          <td class="cell-stock-units">
+            {% if p['stock_qty'] <= 0 %}
+              <span class="stock-badge stock-out">0 (Out of Stock)</span>
+            {% elif p['stock_qty'] <= 5 %}
+              <span class="stock-badge stock-low">{{ p['stock_qty'] }} (Low)</span>
+            {% else %}
+              <span class="stock-text-available">{{ p['stock_qty'] }} in stock</span>
+            {% endif %}
+          </td>
+
+          <!-- 7. Action: Set Out of Stock or Restock 50 -->
+          <td class="cell-action" style="text-align: right; padding-right: 24px;">
+            {% if p['stock_qty'] > 0 %}
+              <form action="/vendor/toggle-stock" method="POST" style="display: inline-block;">
+                <input type="hidden" name="variant_id" value="{{ p['variant_id'] }}">
+                <input type="hidden" name="action" value="set_out_of_stock">
+                <button type="submit" class="btn-action-out" onclick="return confirm('Mark {{ p['name'] }} ({{ p['pack_size'] }}) as Out of Stock?');">
+                  Set Out of Stock
+                </button>
+              </form>
+            {% else %}
+              <form action="/vendor/toggle-stock" method="POST" style="display: inline-block;">
+                <input type="hidden" name="variant_id" value="{{ p['variant_id'] }}">
+                <input type="hidden" name="action" value="restock">
+                <input type="hidden" name="quantity" value="50">
+                <button type="submit" class="btn-action-restock">
+                  Restock 50
+                </button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

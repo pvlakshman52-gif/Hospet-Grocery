@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 16px;">
+  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 16px;">
+    <div style="width: 56px; height: 56px; background: #ecfdf5; color: #16a34a; font-size: 24px; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+      👤
+    </div>
+    <h3 style="font-size: 15px; font-weight: 800; color: #0f172a;">Ramesh Rao</h3>
+    <p style="font-size: 12px; color: #64748b;">+91 98450 12345 • Hospete, Karnataka</p>
+    <div style="display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e; padding: 3px 10px; border-radius: 9999px;">
+      ★ Hospete Fresh Club Member
+    </div>
+  </div>
+
+  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 20px;">
+    <a href="/orders" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; text-decoration: none; color: #0f172a; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600;">
+      <span>📦 Your Orders</span>
+      <span style="color: #94a3b8;">&rarr;</span>
+    </a>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600;">
+      <span>📍 Delivery Address (Patel Nagar)</span>
+      <span style="color: #16a34a; font-size: 11px;">Default</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600;">
+      <span>💳 Payment Methods (UPI / COD)</span>
+      <span style="color: #94a3b8;">&rarr;</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; font-size: 13px; font-weight: 600;">
+      <span>📞 Hospete Customer Care (24x7)</span>
+      <span style="color: #16a34a; font-size: 11px;">08394-220100</span>
+    </div>
+  </div>
+
+  <!-- Portals Switcher for Developers & Store Staff -->
+  <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 14px;">
+    <h4 style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 8px;">Staff & Operations Portals (Full Desktop Views)</h4>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <a href="/admin" style="font-size: 12px; color: #16a34a; text-decoration: none; font-weight: 600;">🏢 Admin Management Portal &rarr;</a>
+      <a href="/vendor" style="font-size: 12px; color: #16a34a; text-decoration: none; font-weight: 600;">🏪 Vendor Inventory & Stock Manager &rarr;</a>
+      <a href="/delivery" style="font-size: 12px; color: #16a34a; text-decoration: none; font-weight: 600;">🛵 Delivery Partner Dispatch &rarr;</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

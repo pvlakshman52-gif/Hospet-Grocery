@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block search_bar %}
+<!-- Hidden on product details to provide clean focus -->
+{% endblock %}
+
+{% block content %}
+<div class="pdp-container">
+  <!-- Top Nav Bar -->
+  <div class="pdp-nav-bar">
+    <a href="javascript:history.back()" class="icon-btn" style="border: none; background: transparent; font-size: 18px;">&larr;</a>
+    <span style="font-size: 13px; font-weight: 700; color: #475569;">{{ category['name'] }}</span>
+    <div style="display: flex; gap: 8px;">
+      <button type="button" class="icon-btn" onclick="this.innerHTML = this.innerHTML === '❤️' ? '🤍' : '❤️'">🤍</button>
+      <a href="/cart" class="icon-btn">
+        🛒
+        {% if cart_count > 0 %}<span class="badge-counter">{{ cart_count }}</span>{% endif %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Large Product Image Stage -->
+  <div class="pdp-image-stage">
+    <img src="{{ product['image_url'] }}" alt="{{ product['name'] }}" id="pdp-main-image">
+  </div>
+
+  <!-- Product Info Body -->
+  <div class="pdp-info-body">
+    <div class="pdp-brand-cat">{{ product['brand'] }} • {{ category['name'] }}</div>
+    <h1 class="pdp-title">{{ product['name'] }}</h1>
+
+    <!-- Rating & Reviews -->
+    <div class="pdp-rating-row">
+      <span class="rating-pill">★ {{ product['rating'] }}</span>
+      <span>({{ product['review_count'] }} verified ratings)</span>
+      <span>•</span>
+      <span id="pdp-current-stock" style="color: #16a34a; font-weight: 600;">In Stock (Freshly packed)</span>
+    </div>
+
+    <!-- Pack-size options as selectable cards -->
+    <div class="pack-size-section">
+      <div class="pack-size-label-title">Select Pack Size:</div>
+      <div class="pack-size-cards-grid">
+        {% for v in variants %}
+        <div class="pack-card {% if v['is_default'] %}selected{% endif %}"
+             data-variant-id="{{ v['id'] }}"
+             data-price="{{ v['price'] }}"
+             data-mrp="{{ v['mrp'] }}"
+             data-stock="{{ v['stock_qty'] }}"
+             data-pack-size="{{ v['pack_size'] }}">
+          <div class="pack-size-text">{{ v['pack_size'] }}</div>
+          <div class="pack-price-text">₹{{ '%.0f'|format(v['price']) }}</div>
+          {% if v['mrp'] > v['price'] %}
+            <div class="pack-mrp-text">₹{{ '%.0f'|format(v['mrp']) }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Dynamic Price Display -->
+    {% set def_v = variants|selectattr('is_default', 'equalto', 1)|first or variants[0] %}
+    <div class="pdp-price-box">
+      <span class="pdp-price" id="pdp-current-price">₹{{ '%.0f'|format(def_v['price']) }}</span>
+      <span class="pdp-mrp" id="pdp-current-mrp">₹{{ '%.0f'|format(def_v['mrp']) }}</span>
+      {% if def_v['discount_pct'] and def_v['discount_pct'] > 0 %}
+        <span class="pdp-save-badge" id="pdp-current-save">{{ def_v['discount_pct']|int }}% OFF</span>
+      {% else %}
+        <span class="pdp-save-badge" id="pdp-current-save" style="display:none;"></span>
+      {% endif %}
+    </div>
+
+    <!-- Add to Cart Form with Quantity Stepper -->
+    <form action="/add-to-cart" method="POST" class="ajax-add-cart" style="margin-top: 14px;">
+      <input type="hidden" name="variant_id" id="pdp-variant-id" value="{{ def_v['id'] }}">
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div style="display: flex; align-items: center; border: 1.5px solid #cbd5e1; border-radius: 8px; overflow: hidden; height: 44px; width: 110px;">
+          <button type="button" onclick="const q = document.getElementById('pdp-qty'); if(q.value > 1) q.value--;" style="flex:1; height: 100%; border:none; background:#f8fafc; font-size:16px; font-weight:bold; cursor:pointer;">-</button>
+          <input type="number" name="qty" id="pdp-qty" value="1" min="1" max="10" readonly style="width: 40px; text-align: center; border: none; font-size: 14px; font-weight: 700;">
+          <button type="button" onclick="const q = document.getElementById('pdp-qty'); if(q.value < 10) q.value++;" style="flex:1; height: 100%; border:none; background:#f8fafc; font-size:16px; font-weight:bold; cursor:pointer;">+</button>
+        </div>
+        <button type="submit" id="pdp-add-btn" class="btn-add" style="flex: 2; height: 44px; font-size: 14px;">
+          Add to Cart
+        </button>
+      </div>
+    </form>
+
+    <!-- Product Description -->
+    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+      <h4 style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">Product Highlights</h4>
+      <p style="font-size: 12px; color: #475569; line-height: 1.5;">{{ product['description'] }}</p>
+    </div>
+
+    <!-- Benefits Row -->
+    <div class="benefits-row">
+      <div class="benefit-item">
+        <span class="benefit-icon">🌿</span>
+        <span class="benefit-text">100% Fresh & Authentic</span>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">⚡</span>
+        <span class="benefit-text">20-Min Fast Delivery</span>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">🛡️</span>
+        <span class="benefit-text">Hassle-Free Returns</span>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">💳</span>
+        <span class="benefit-text">Secure UPI & COD</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Similar Products -->
+  {% if similar_products %}
+  <div class="section-container">
+    <h3 class="section-title" style="margin-bottom: 12px;">You May Also Need</h3>
+    <div class="products-grid-2col">
+      {% for sp in similar_products %}
+      <div class="product-card">
+        <a href="/product/{{ sp['id'] }}" class="product-name-link">
+          <div class="card-image-box">
+            <img src="{{ sp['image_url'] }}" alt="{{ sp['name'] }}" loading="lazy">
+          </div>
+          <div class="card-body">
+            <div class="product-name">{{ sp['name'] }}</div>
+            <div class="pack-size-label">{{ sp['pack_size'] }}</div>
+            <div class="price-row">
+              <span class="selling-price">₹{{ '%.0f'|format(sp['price']) }}</span>
+            </div>
+          </div>
+        </a>
+        <form action="/add-to-cart" method="POST" class="ajax-add-cart">
+          <input type="hidden" name="variant_id" value="{{ sp['default_variant_id'] }}">
+          <input type="hidden" name="qty" value="1">
+          <button type="submit" class="btn-add">
+            <span>+</span> ADD
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

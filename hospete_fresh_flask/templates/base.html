@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Hospete Fresh - Daily Grocery & Supermarket{% endblock %}</title>
+  <!-- Plus Jakarta Sans Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet with cache-busting query parameter as instructed -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.4.0">
+</head>
+<body>
+
+{% if request.path.startswith('/admin') or request.path.startswith('/vendor') or request.path.startswith('/delivery') %}
+  <!-- Wide desktop layout for management/portal screens (Explicitly NOT using mobile framing) -->
+  <div class="portal-screen">
+    <div class="portal-nav">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="brand-badge">HOSPETE FRESH</span>
+        <span style="font-weight: 700; font-size: 14px; color: #475569;">Management Console</span>
+      </div>
+      <div class="portal-links">
+        <a href="/" class="portal-link">Customer App &rarr;</a>
+        <a href="/admin" class="portal-link {% if request.path == '/admin' %}active{% endif %}">Admin Portal</a>
+        <a href="/vendor" class="portal-link {% if request.path == '/vendor' %}active{% endif %}">Vendor Inventory</a>
+        <a href="/delivery" class="portal-link {% if request.path == '/delivery' %}active{% endif %}">Delivery Partner</a>
+      </div>
+    </div>
+    {% block portal_content %}{% endblock %}
+  </div>
+{% else %}
+  <!-- Customer Mobile Screen: Centered 390-430px wide preview on desktop, 100% on actual mobile -->
+  <div class="customer-viewport-container">
+    <div class="mobile-app-shell">
+      <!-- Status Notch (Mobile Frame) -->
+      <div class="mobile-status-notch">
+        <span>9:41</span>
+        <span>Hospete Fresh 5G ⚡</span>
+      </div>
+
+      <!-- App Header & Delivery Location -->
+      <header class="app-header">
+        <div class="header-top">
+          <div class="brand-location">
+            <a href="/" style="text-decoration: none;"><span class="brand-badge">HOSPETE FRESH</span></a>
+            <div class="location-selector">
+              <span class="delivery-eta">⚡ {{ current_eta }} MINS</span>
+              <form action="/set-location" method="POST" id="loc-form" style="display:inline;">
+                <select name="locality" onchange="this.form.submit()" style="background: none; border: none; font-size: 13px; font-weight: 700; color: #0f172a; cursor: pointer; padding: 0; outline: none;">
+                  {% for loc in localities_list %}
+                    <option value="{{ loc['name'] }}" {% if loc['name'] == current_locality %}selected{% endif %}>
+                      {{ loc['name'] }}, 583201
+                    </option>
+                  {% endfor %}
+                </select>
+              </form>
+            </div>
+          </div>
+          <div class="header-actions">
+            <a href="/account" class="icon-btn" title="Account">👤</a>
+            <a href="/cart" class="icon-btn" title="Cart">
+              🛒
+              {% if cart_count > 0 %}
+                <span class="badge-counter">{{ cart_count }}</span>
+              {% endif %}
+            </a>
+          </div>
+        </div>
+
+        {% block search_bar %}
+        <!-- Search Bar with instant filter -->
+        <div class="search-container">
+          <form action="/search" method="GET">
+            <span class="search-icon-inside">🔍</span>
+            <input type="text" name="q" class="search-input" placeholder="Search rice, tomatoes, Nandini milk, snacks..." value="{{ request.args.get('q', '') }}">
+          </form>
+        </div>
+        {% endblock %}
+      </header>
+
+      <!-- Scrollable Main Content -->
+      <main class="app-scroll-content">
+        {% block content %}{% endblock %}
+      </main>
+
+      <!-- Floating Basket Summary (Shows when cart has items) -->
+      {% if cart_count > 0 and request.path != '/cart' and request.path != '/checkout' %}
+      <a href="/cart" class="floating-basket-bar">
+        <div class="floating-basket-info">
+          <span class="basket-count-price"><span id="basket-items-count">{{ cart_count }}</span> items • ₹<span id="basket-total-amt">{{ '%.0f'|format(cart_total) }}</span></span>
+          <span class="basket-savings-note">⚡ Free Delivery on orders above ₹199</span>
+        </div>
+        <div class="basket-view-action">View Cart &rarr;</div>
+      </a>
+      {% endif %}
+
+      <!-- Fixed Bottom Navigation (5 items: Home, Categories, Search, Orders, Account) -->
+      <nav class="bottom-nav-bar">
+        <a href="/" class="bottom-nav-item {% if request.path == '/' %}active{% endif %}">
+          <span class="bottom-nav-icon">🏠</span>
+          <span>Home</span>
+        </a>
+        <a href="/categories" class="bottom-nav-item {% if request.path == '/categories' %}active{% endif %}">
+          <span class="bottom-nav-icon">📁</span>
+          <span>Categories</span>
+        </a>
+        <a href="/search" class="bottom-nav-item {% if request.path == '/search' %}active{% endif %}">
+          <span class="bottom-nav-icon">🔍</span>
+          <span>Search</span>
+        </a>
+        <a href="/orders" class="bottom-nav-item {% if request.path == '/orders' %}active{% endif %}">
+          <span class="bottom-nav-icon">📦</span>
+          <span>Orders</span>
+        </a>
+        <a href="/account" class="bottom-nav-item {% if request.path == '/account' %}active{% endif %}">
+          <span class="bottom-nav-icon">👤</span>
+          <span>Account</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/app.js') }}?v=2.4.0"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

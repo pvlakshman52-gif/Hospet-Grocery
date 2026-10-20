@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 16px;">
+  <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 14px;">All Categories</h2>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    {% for cat in categories %}
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 22px;">{{ cat['icon_emoji'] }}</span>
+          <span style="font-size: 14px; font-weight: 800; color: #0f172a;">{{ cat['name'] }}</span>
+        </div>
+        <a href="/?category={{ cat['slug'] }}" style="font-size: 12px; font-weight: 700; color: #16a34a; text-decoration: none;">View All &rarr;</a>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+        {% for p in cat_products.get(cat['slug'], []) %}
+        <div style="border: 1px solid #f1f5f9; border-radius: 8px; padding: 8px; background: #fafafa; display: flex; flex-direction: column; justify-content: space-between;">
+          <a href="/product/{{ p['id'] }}" style="text-decoration: none; color: inherit;">
+            <div style="font-size: 11px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">{{ p['name'] }}</div>
+            <div style="font-size: 10px; color: #64748b;">{{ p['pack_size'] }}</div>
+            <div style="font-size: 12px; font-weight: 800; color: #16a34a; margin: 4px 0;">₹{{ '%.0f'|format(p['price']) }}</div>
+          </a>
+          <form action="/add-to-cart" method="POST" class="ajax-add-cart">
+            <input type="hidden" name="variant_id" value="{{ p['default_variant_id'] }}">
+            <input type="hidden" name="qty" value="1">
+            <button type="submit" class="btn-add" style="height: 28px; font-size: 11px;">+ ADD</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
