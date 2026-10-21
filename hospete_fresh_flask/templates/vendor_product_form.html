@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block portal_content %}
+<!-- Vendor Sub Navigation -->
+<div class="vendor-nav-subbar">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <span style="font-size: 16px;">🏪</span>
+    <span style="font-weight: 800; font-size: 14px; color: #0f172a;">{{ vendor['business_name'] }}</span>
+  </div>
+  <div class="vendor-nav-links">
+    <a href="/vendor/dashboard" class="v-link">Dashboard</a>
+    <a href="/vendor/products" class="v-link">My Products</a>
+    <a href="/vendor/products/new" class="v-link {% if not product %}active{% endif %}">+ Add Product</a>
+    <a href="/vendor/inventory" class="v-link">Inventory / Stock</a>
+    <a href="/vendor/orders" class="v-link">My Orders</a>
+    <a href="/vendor/profile" class="v-link">Store Profile</a>
+    <a href="/vendor/logout" class="v-link" style="color: #ef4444;">Logout</a>
+  </div>
+</div>
+
+<div style="max-width: 800px; margin: 16px auto 40px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800; color: #0f172a;">
+        {% if product %}Edit Listing: {{ product['name'] }}{% else %}Add New Grocery Product{% endif %}
+      </h1>
+      <p style="font-size: 13px; color: #64748b;">
+        Define product attributes, multiple pack size variants, pricing, and initial stock quantities.
+      </p>
+    </div>
+    <a href="/vendor/products" style="font-size: 12px; font-weight: 700; color: #16a34a; text-decoration: none;">
+      &larr; Back to Products
+    </a>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div style="margin-bottom: 20px;">
+        {% for category, message in messages %}
+          <div class="vendor-flash-box flash-{{ category }}">
+            <span>{% if category == 'warning' %}⚠️{% elif category == 'error' %}❌{% else %}✅{% endif %}</span>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="vendor-panel-card" style="padding: 28px;">
+    <form action="{% if product %}/vendor/products/{{ product['id'] }}/edit{% else %}/vendor/products/new{% endif %}" method="POST">
+      <!-- General Details -->
+      <h3 style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+        1. General Product Details
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Product Name <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="text" name="name" required placeholder="e.g. Farm Fresh Crisp Capsicum" value="{{ product['name'] if product else '' }}" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Category <span style="color: #ef4444;">*</span>
+          </label>
+          <select name="category_slug" required style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px; background: #fff;">
+            {% for cat in categories %}
+              <option value="{{ cat['slug'] }}" {% if product and product['category_slug'] == cat['slug'] %}selected{% endif %}>
+                {{ cat['icon_emoji'] }} {{ cat['name'] }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Brand / Farm Name <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="text" name="brand" required placeholder="e.g. Tungabhadra Farms" value="{{ product['brand'] if product else vendor['business_name'] }}" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            SKU / Product Code (Optional)
+          </label>
+          <input type="text" name="sku" placeholder="e.g. VEG-CAP-01" value="{{ product['sku'] if product else '' }}" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+          Product Description & Storage Instructions
+        </label>
+        <textarea name="description" rows="3" placeholder="Describe origin, quality, harvest date, and culinary recommendations..." style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; font-size: 13px;">{{ product['description'] if product else '' }}</textarea>
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+          Product Photo URL / Static Path
+        </label>
+        <input type="text" name="image_url" placeholder="/static/images/tomatoes.jpg or custom image path" value="{{ product['image_url'] if product else '/static/images/cat_veggies.jpg' }}" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">
+          Note: Verified local imagery or standard category fallback will be applied automatically.
+        </span>
+      </div>
+
+      <!-- Pack Size Variants Section -->
+      <div style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <div>
+            <h3 style="font-size: 14px; font-weight: 800; color: #0f172a;">
+              2. Pack Variants, Pricing & Stock
+            </h3>
+            <span style="font-size: 11px; color: #64748b;">
+              Provide one or more pack sizes (e.g. 500g, 1kg, 2kg). Selling Price must not exceed MRP.
+            </span>
+          </div>
+          <button type="button" onclick="addVariantRow()" class="btn-action-restock" style="border: 1px dashed #16a34a; font-size: 12px;">
+            + Add Another Pack Variant
+          </button>
+        </div>
+
+        <div id="variants-container" style="display: flex; flex-direction: column; gap: 12px;">
+          {% if product and variants %}
+            {% for v in variants %}
+            <div class="variant-row" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: flex-end;">
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Pack Size *</label>
+                <input type="text" name="variant_pack_size[]" required value="{{ v['pack_size'] }}" placeholder="e.g. 500 g or 1 kg" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">MRP (₹) *</label>
+                <input type="number" step="1" name="variant_mrp[]" required value="{{ '%.0f'|format(v['mrp']) }}" min="1" placeholder="25" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Selling Price (₹) *</label>
+                <input type="number" step="1" name="variant_price[]" required value="{{ '%.0f'|format(v['price']) }}" min="1" placeholder="20" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Stock Units *</label>
+                <input type="number" name="variant_stock[]" required value="{{ v['stock_qty'] }}" min="0" placeholder="50" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+              </div>
+              <div>
+                <button type="button" onclick="this.closest('.variant-row').remove()" style="height: 38px; padding: 0 10px; border: 1px solid #fecaca; background: #fee2e2; color: #dc2626; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">✕</button>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <!-- Default First Variant Row -->
+            <div class="variant-row" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: flex-end;">
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Pack Size *</label>
+                <input type="text" name="variant_pack_size[]" required placeholder="e.g. 500 g" value="500 g" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">MRP (₹) *</label>
+                <input type="number" step="1" name="variant_mrp[]" required min="1" placeholder="30" value="30" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Selling Price (₹) *</label>
+                <input type="number" step="1" name="variant_price[]" required min="1" placeholder="24" value="24" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Stock Units *</label>
+                <input type="number" name="variant_stock[]" required min="0" placeholder="50" value="50" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+              </div>
+              <div>
+                <button type="button" onclick="if(document.querySelectorAll('.variant-row').length > 1) this.closest('.variant-row').remove();" style="height: 38px; padding: 0 10px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #64748b; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">✕</button>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Moderation disclosure -->
+      <div style="background-color: #ecfdf5; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 24px; font-size: 11px; color: #166534;">
+        🛡️ <strong>Quality & Moderation Policy:</strong> All new or edited grocery listings are submitted for review by Hospete Fresh administrators. Approved products are instantly made purchasable across all 8 Hospete delivery zones.
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button type="submit" class="btn-add" style="flex: 2; height: 46px; font-size: 14px; border-radius: 10px;">
+          {% if product %}Update & Resubmit Listing &rarr;{% else %}Submit Product for Approval &rarr;{% endif %}
+        </button>
+        <a href="/vendor/products" class="btn-action-out" style="flex: 1; height: 46px; font-size: 13px; border-radius: 10px; justify-content: center; text-decoration: none;">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function addVariantRow() {
+  const container = document.getElementById('variants-container');
+  const div = document.createElement('div');
+  div.className = 'variant-row';
+  div.style.cssText = 'background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: flex-end; margin-top: 10px;';
+  div.innerHTML = `
+    <div>
+      <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Pack Size *</label>
+      <input type="text" name="variant_pack_size[]" required placeholder="e.g. 1 kg or 5 kg" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+    </div>
+    <div>
+      <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">MRP (₹) *</label>
+      <input type="number" step="1" name="variant_mrp[]" required min="1" placeholder="50" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+    </div>
+    <div>
+      <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Selling Price (₹) *</label>
+      <input type="number" step="1" name="variant_price[]" required min="1" placeholder="42" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+    </div>
+    <div>
+      <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px;">Stock Units *</label>
+      <input type="number" name="variant_stock[]" required min="0" placeholder="30" value="30" style="width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 8px; font-size: 12px;">
+    </div>
+    <div>
+      <button type="button" onclick="this.closest('.variant-row').remove()" style="height: 38px; padding: 0 10px; border: 1px solid #fecaca; background: #fee2e2; color: #dc2626; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">✕</button>
+    </div>
+  `;
+  container.appendChild(div);
+}
+</script>
+{% endblock %}

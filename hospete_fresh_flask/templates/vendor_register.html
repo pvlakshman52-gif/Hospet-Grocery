@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block portal_content %}
+<div style="max-width: 680px; margin: 0 auto; padding: 10px 0 40px;">
+  <div style="text-align: center; margin-bottom: 24px;">
+    <span class="brand-badge" style="font-size: 14px; padding: 6px 12px;">HOSPETE FRESH</span>
+    <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 12px 0 6px;">Register as a Partner Vendor</h1>
+    <p style="font-size: 13px; color: #64748b;">
+      Sell fresh vegetables, dairy, farm produce, grains, and authentic snacks directly to Hospete customers.
+    </p>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div style="margin-bottom: 20px;">
+        {% for category, message in messages %}
+          <div class="vendor-flash-box flash-{{ category }}">
+            <span>{% if category == 'warning' %}⚠️{% elif category == 'error' %}❌{% else %}✅{% endif %}</span>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="vendor-panel-card" style="padding: 28px;">
+    <form action="/vendor/register" method="POST">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Business / Store Name <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="text" name="business_name" required placeholder="e.g. Tungabhadra Agro Farm" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Owner / Contact Person Name <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="text" name="owner_name" required placeholder="e.g. Suresh Gowda" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Mobile Number (10 Digits) <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="tel" name="phone" required pattern="[0-9]{10}" placeholder="e.g. 9845012345" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Email Address (Optional)
+          </label>
+          <input type="email" name="email" placeholder="e.g. vendor@example.com" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Primary Business Type <span style="color: #ef4444;">*</span>
+          </label>
+          <select name="business_type" required style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px; background: #fff;">
+            <option value="farmer">Farmer / Fresh Farm Produce (Vegetables & Fruits)</option>
+            <option value="dairy">Dairy & Milk Supplier</option>
+            <option value="snacks">Snacks & Traditional Namkeen Maker</option>
+            <option value="grocery">Wholesale Grocery & Supermarket</option>
+            <option value="other">Other Food Essentials</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Hospete Base Locality <span style="color: #ef4444;">*</span>
+          </label>
+          <select name="locality" required style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px; background: #fff;">
+            {% for loc in localities_list %}
+              <option value="{{ loc['name'] }}">{{ loc['name'] }} (Pin: {{ loc['pincode'] }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+          Business / Farm Address <span style="color: #ef4444;">*</span>
+        </label>
+        <textarea name="address" rows="2" required placeholder="Shop number, street, landmark, village/town..." style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; font-size: 13px;"></textarea>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+          Delivery Service Area in Hospete
+        </label>
+        <input type="text" name="service_area" placeholder="e.g. College Road, Patel Nagar, Amaravathi, Dam Road" value="All Hospete Localities" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Create Password <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="password" name="password" required minlength="6" placeholder="Minimum 6 characters" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+            Confirm Password <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="password" name="confirm_password" required minlength="6" placeholder="Repeat your password" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+          Store Description / Specialities (Optional)
+        </label>
+        <textarea name="description" rows="2" placeholder="Briefly describe what you grow or prepare..." style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; font-size: 13px;"></textarea>
+      </div>
+
+      <!-- OTP Disclosure as requested in guidelines -->
+      <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 24px; font-size: 11px; color: #64748b;">
+        <strong>ℹ️ Verification Note:</strong> SMS OTP phone verification is slated for a future release once the telecom gateway integration is finalized. New vendor accounts enter <strong>Pending Approval</strong> status and are reviewed by Hospete Fresh administrators before customer publishing.
+      </div>
+
+      <button type="submit" class="btn-add" style="width: 100%; height: 46px; font-size: 14px; border-radius: 10px;">
+        Submit Vendor Application &rarr;
+      </button>
+
+      <div style="text-align: center; margin-top: 16px; font-size: 12px; color: #64748b;">
+        Already registered as a vendor? <a href="/vendor/login" style="color: #16a34a; font-weight: 700; text-decoration: none;">Log In Here &rarr;</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

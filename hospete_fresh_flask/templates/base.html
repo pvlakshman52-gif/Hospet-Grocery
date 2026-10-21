@@ -13,6 +13,20 @@
 </head>
 <body>
 
+{% if session.get('is_admin_preview') %}
+  <div style="background: #0f172a; color: #fff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #10b981; font-size: 12px; flex-wrap: wrap; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="background: #10b981; color: #0f172a; font-weight: 800; font-size: 10px; padding: 2px 8px; border-radius: 4px;">ADMIN PREVIEW</span>
+      <span>Viewing dashboard as <strong>{{ session.get('vendor_name', 'Vendor') }}</strong> (Vendor credentials hidden & secured).</span>
+      <span style="color: #34d399; font-size: 11px;">{% if session.get('admin_safe_mode', True) %}🛡️ Safe Read-Only Active{% else %}⚠️ Live Edit Active{% endif %}</span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <a href="/admin/toggle-preview-safemode" style="color: #94a3b8; font-size: 11px; text-decoration: underline;">Switch Safe Mode</a>
+      <a href="/admin/exit-preview" style="background: #ffffff; color: #0f172a; font-weight: 800; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 11px;">Exit Preview &rarr;</a>
+    </div>
+  </div>
+{% endif %}
+
 {% if request.path.startswith('/admin') or request.path.startswith('/vendor') or request.path.startswith('/delivery') %}
   <!-- Wide desktop layout for management/portal screens (Explicitly NOT using mobile framing) -->
   <div class="portal-screen">
@@ -23,9 +37,16 @@
       </div>
       <div class="portal-links">
         <a href="/" class="portal-link">Customer App &rarr;</a>
-        <a href="/admin" class="portal-link {% if request.path == '/admin' %}active{% endif %}">Admin Portal</a>
-        <a href="/vendor" class="portal-link {% if request.path == '/vendor' %}active{% endif %}">Vendor Inventory</a>
-        <a href="/delivery" class="portal-link {% if request.path == '/delivery' %}active{% endif %}">Delivery Partner</a>
+        <a href="/admin" class="portal-link {% if request.path.startswith('/admin') %}active{% endif %}">Admin Portal</a>
+        {% if current_vendor %}
+          <a href="/vendor/dashboard" class="portal-link {% if request.path.startswith('/vendor') %}active{% endif %}">
+            🏪 {{ current_vendor['business_name'] }}
+          </a>
+          <a href="/vendor/logout" class="portal-link" style="color: #ef4444;">Logout</a>
+        {% else %}
+          <a href="/vendor/login" class="portal-link {% if request.path.startswith('/vendor') %}active{% endif %}">Vendor Portal</a>
+        {% endif %}
+        <a href="/delivery" class="portal-link {% if request.path.startswith('/delivery') %}active{% endif %}">Delivery Partner</a>
       </div>
     </div>
     {% block portal_content %}{% endblock %}

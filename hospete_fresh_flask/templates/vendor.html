@@ -1,16 +1,43 @@
 {% extends "base.html" %}
 
 {% block portal_content %}
+<!-- Vendor Navigation Subbar -->
+{% if current_vendor %}
+<div class="vendor-nav-subbar">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <span style="font-size: 16px;">🏪</span>
+    <span style="font-weight: 800; font-size: 14px; color: #0f172a;">{{ current_vendor['business_name'] }}</span>
+    {% if current_vendor['status'] == 'approved' %}
+      <span class="stock-badge" style="background: #ecfdf5; color: #15803d; border: 1px solid #bbf7d0;">● Approved</span>
+    {% else %}
+      <span class="stock-badge stock-low">⏳ {{ current_vendor['status']|capitalize }}</span>
+    {% endif %}
+  </div>
+  <div class="vendor-nav-links">
+    <a href="/vendor/dashboard" class="v-link">Dashboard</a>
+    <a href="/vendor/products" class="v-link">My Products</a>
+    <a href="/vendor/products/new" class="v-link">+ Add Product</a>
+    <a href="/vendor/inventory" class="v-link active">Inventory / Stock</a>
+    <a href="/vendor/orders" class="v-link">My Orders</a>
+    <a href="/vendor/profile" class="v-link">Store Profile</a>
+    <a href="/vendor/logout" class="v-link" style="color: #ef4444;">Logout</a>
+  </div>
+</div>
+{% endif %}
+
 <!-- White Header Card matching the visual reference -->
-<div class="vendor-header-card">
+<div class="vendor-header-card" style="margin-top: 16px;">
   <div class="vendor-header-text">
     <h1 class="vendor-title">Vendor Inventory & Stock Manager</h1>
     <p class="vendor-subtitle">Real-time stock adjustment for Hospete farmers, dairy suppliers, and snacks makers.</p>
   </div>
-  <a href="/" class="btn-test-store" title="Preview changes in the live customer storefront">
-    <span>Test in Mobile Store</span>
-    <span style="font-size: 16px; line-height: 1;">&rarr;</span>
-  </a>
+  <div style="display: flex; gap: 8px;">
+    <a href="/vendor/products/new" class="btn-action-restock" style="text-decoration: none; padding: 10px 14px;">+ Add Product</a>
+    <a href="/" class="btn-test-store" title="Preview changes in the live customer storefront">
+      <span>Test in Mobile Store</span>
+      <span style="font-size: 16px; line-height: 1;">&rarr;</span>
+    </a>
+  </div>
 </div>
 
 <!-- Flash Messages -->
@@ -32,10 +59,10 @@
   <div class="vendor-panel-header">
     <div style="display: flex; align-items: center; gap: 10px;">
       <h2 class="vendor-panel-title">Product Variants & Stock Inventory</h2>
-      <span class="vendor-variant-badge">{{ products|length }} variants</span>
+      <span class="vendor-variant-badge">{{ products|length }} variants listed</span>
     </div>
     <div style="font-size: 12px; color: #64748b;">
-      Click <strong>Set Out of Stock</strong> to instantly disable ordering in the customer app.
+      Click <strong>Set Out of Stock</strong> to instantly disable customer ordering.
     </div>
   </div>
 
@@ -53,67 +80,78 @@
         </tr>
       </thead>
       <tbody>
-        {% for p in products %}
-        <tr class="{% if p['stock_qty'] <= 0 %}row-out-of-stock{% endif %}">
-          <!-- 1. Product Name in bold -->
-          <td class="cell-product-name">
-            <strong>{{ p['name'] }}</strong>
-          </td>
+        {% if products %}
+          {% for p in products %}
+          <tr class="{% if p['stock_qty'] <= 0 %}row-out-of-stock{% endif %}">
+            <!-- 1. Product Name in bold -->
+            <td class="cell-product-name">
+              <strong>{{ p['name'] }}</strong>
+            </td>
 
-          <!-- 2. Brand in muted text -->
-          <td class="cell-brand">
-            {{ p['brand'] }}
-          </td>
+            <!-- 2. Brand in muted text -->
+            <td class="cell-brand">
+              {{ p['brand'] }}
+            </td>
 
-          <!-- 3. Pack Size -->
-          <td class="cell-pack-size">
-            <strong>{{ p['pack_size'] }}</strong>
-          </td>
+            <!-- 3. Pack Size -->
+            <td class="cell-pack-size">
+              <strong>{{ p['pack_size'] }}</strong>
+            </td>
 
-          <!-- 4. Selling Price in green -->
-          <td class="cell-selling-price">
-            ₹{{ '%.0f'|format(p['price']) }}
-          </td>
+            <!-- 4. Selling Price in green -->
+            <td class="cell-selling-price">
+              ₹{{ '%.0f'|format(p['price']) }}
+            </td>
 
-          <!-- 5. MRP in muted strikethrough text -->
-          <td class="cell-mrp">
-            ₹{{ '%.0f'|format(p['mrp']) }}
-          </td>
+            <!-- 5. MRP in muted strikethrough text -->
+            <td class="cell-mrp">
+              ₹{{ '%.0f'|format(p['mrp']) }}
+            </td>
 
-          <!-- 6. Stock Units -->
-          <td class="cell-stock-units">
-            {% if p['stock_qty'] <= 0 %}
-              <span class="stock-badge stock-out">0 (Out of Stock)</span>
-            {% elif p['stock_qty'] <= 5 %}
-              <span class="stock-badge stock-low">{{ p['stock_qty'] }} (Low)</span>
-            {% else %}
-              <span class="stock-text-available">{{ p['stock_qty'] }} in stock</span>
-            {% endif %}
-          </td>
+            <!-- 6. Stock Units -->
+            <td class="cell-stock-units">
+              {% if p['stock_qty'] <= 0 %}
+                <span class="stock-badge stock-out">0 (Out of Stock)</span>
+              {% elif p['stock_qty'] <= 5 %}
+                <span class="stock-badge stock-low">{{ p['stock_qty'] }} units (Low)</span>
+              {% else %}
+                <span class="stock-text-available">{{ p['stock_qty'] }} in stock</span>
+              {% endif %}
+            </td>
 
-          <!-- 7. Action: Set Out of Stock or Restock 50 -->
-          <td class="cell-action" style="text-align: right; padding-right: 24px;">
-            {% if p['stock_qty'] > 0 %}
-              <form action="/vendor/toggle-stock" method="POST" style="display: inline-block;">
-                <input type="hidden" name="variant_id" value="{{ p['variant_id'] }}">
-                <input type="hidden" name="action" value="set_out_of_stock">
-                <button type="submit" class="btn-action-out" onclick="return confirm('Mark {{ p['name'] }} ({{ p['pack_size'] }}) as Out of Stock?');">
-                  Set Out of Stock
-                </button>
-              </form>
-            {% else %}
-              <form action="/vendor/toggle-stock" method="POST" style="display: inline-block;">
-                <input type="hidden" name="variant_id" value="{{ p['variant_id'] }}">
-                <input type="hidden" name="action" value="restock">
-                <input type="hidden" name="quantity" value="50">
-                <button type="submit" class="btn-action-restock">
-                  Restock 50
-                </button>
-              </form>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
+            <!-- 7. Action: Set Out of Stock or Restock 50 -->
+            <td class="cell-action" style="text-align: right; padding-right: 24px;">
+              {% if p['stock_qty'] > 0 %}
+                <form action="/vendor/toggle-stock" method="POST" style="display: inline-block;">
+                  <input type="hidden" name="variant_id" value="{{ p['variant_id'] }}">
+                  <input type="hidden" name="action" value="set_out_of_stock">
+                  <button type="submit" class="btn-action-out" onclick="return confirm('Mark {{ p['name'] }} ({{ p['pack_size'] }}) as Out of Stock?');">
+                    Set Out of Stock
+                  </button>
+                </form>
+              {% else %}
+                <form action="/vendor/toggle-stock" method="POST" style="display: inline-block;">
+                  <input type="hidden" name="variant_id" value="{{ p['variant_id'] }}">
+                  <input type="hidden" name="action" value="restock">
+                  <input type="hidden" name="quantity" value="50">
+                  <button type="submit" class="btn-action-restock">
+                    Restock 50
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">
+              <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+              <h3 style="font-size: 15px; font-weight: 700; color: #0f172a;">No inventory items yet</h3>
+              <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">Add a product with pack size variants to manage your stock here.</p>
+              <a href="/vendor/products/new" class="btn-add" style="display: inline-flex; width: auto; padding: 8px 18px; font-size: 12px;">+ Add Product</a>
+            </td>
+          </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>

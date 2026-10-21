@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block portal_content %}
+<!-- Vendor Navigation Bar -->
+<div class="vendor-nav-subbar">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <span style="font-size: 16px;">🏪</span>
+    <span style="font-weight: 800; font-size: 14px; color: #0f172a;">{{ vendor['business_name'] }}</span>
+    {% if vendor['status'] == 'approved' %}
+      <span class="stock-badge" style="background: #ecfdf5; color: #15803d; border: 1px solid #bbf7d0;">● Approved Vendor</span>
+    {% elif vendor['status'] == 'pending' %}
+      <span class="stock-badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a;">⏳ Pending Admin Approval</span>
+    {% elif vendor['status'] == 'rejected' %}
+      <span class="stock-badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">✕ Application Rejected</span>
+    {% endif %}
+  </div>
+
+  <div class="vendor-nav-links">
+    <a href="/vendor/dashboard" class="v-link active">Dashboard</a>
+    <a href="/vendor/products" class="v-link">My Products</a>
+    <a href="/vendor/products/new" class="v-link">+ Add Product</a>
+    <a href="/vendor/inventory" class="v-link">Inventory / Stock</a>
+    <a href="/vendor/orders" class="v-link">My Orders</a>
+    <a href="/vendor/profile" class="v-link">Store Profile</a>
+    <a href="/vendor/logout" class="v-link" style="color: #ef4444;">Logout</a>
+  </div>
+</div>
+
+<!-- Header Card -->
+<div class="vendor-header-card" style="margin-top: 16px;">
+  <div class="vendor-header-text">
+    <h1 class="vendor-title">Welcome back, {{ vendor['owner_name'] }}</h1>
+    <p class="vendor-subtitle">
+      Manage your catalog, stock availability, and fulfill fresh grocery orders for {{ vendor['locality'] }} and surrounding Hospete areas.
+    </p>
+  </div>
+  <div style="display: flex; gap: 10px;">
+    <a href="/vendor/products/new" class="btn-add" style="width: auto; height: 38px; padding: 0 16px; font-size: 12px;">
+      + Add New Product
+    </a>
+    <a href="/" class="btn-test-store" style="height: 38px; padding: 0 16px; font-size: 12px;">
+      <span>Test in Storefront</span>
+      <span>&rarr;</span>
+    </a>
+  </div>
+</div>
+
+<!-- Approval Status Banners -->
+{% if vendor['status'] == 'pending' %}
+<div class="vendor-flash-box flash-warning" style="margin-bottom: 20px;">
+  <span style="font-size: 20px;">⏳</span>
+  <div>
+    <strong>Account Pending Approval:</strong> Your vendor application is currently under review by Hospete Fresh administrators. You can create draft products and set initial stock, but they will not be published to customer storefronts until your account is approved.
+  </div>
+</div>
+{% elif vendor['status'] == 'rejected' %}
+<div class="vendor-flash-box flash-error" style="margin-bottom: 20px;">
+  <span style="font-size: 20px;">⚠️</span>
+  <div>
+    <strong>Account Rejected:</strong> {{ vendor['rejection_reason'] or 'Please review your store credentials or contact support at 08394-220100 to appeal.' }}
+    <a href="/vendor/profile" style="color: #991b1b; font-weight: 700; text-decoration: underline; margin-left: 6px;">Update Store Profile &rarr;</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- Metrics Grid -->
+<div class="portal-metrics-grid" style="margin-bottom: 24px;">
+  <div class="portal-metric-card">
+    <div class="portal-metric-title">Total Products</div>
+    <div class="portal-metric-val">{{ metrics['total_products'] }}</div>
+    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Across {{ metrics['total_variants'] }} pack variants</div>
+  </div>
+
+  <div class="portal-metric-card">
+    <div class="portal-metric-title">Active (Approved)</div>
+    <div class="portal-metric-val" style="color: #16a34a;">{{ metrics['active_products'] }}</div>
+    <div style="font-size: 11px; color: #16a34a; margin-top: 4px;">Live on customer store</div>
+  </div>
+
+  <div class="portal-metric-card">
+    <div class="portal-metric-title">Pending Moderation</div>
+    <div class="portal-metric-val" style="color: #d97706;">{{ metrics['pending_products'] }}</div>
+    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Awaiting admin sign-off</div>
+  </div>
+
+  <div class="portal-metric-card">
+    <div class="portal-metric-title">Out of Stock</div>
+    <div class="portal-metric-val" style="color: #ef4444;">{{ metrics['out_of_stock'] }}</div>
+    <div style="font-size: 11px; color: #ef4444; margin-top: 4px;">Variants with 0 inventory</div>
+  </div>
+
+  <div class="portal-metric-card">
+    <div class="portal-metric-title">Assigned Orders</div>
+    <div class="portal-metric-val">{{ metrics['orders_count'] }}</div>
+    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Fulfilled in Hospete</div>
+  </div>
+
+  <div class="portal-metric-card">
+    <div class="portal-metric-title">Vendor Sales Total</div>
+    <div class="portal-metric-val" style="color: #15803d;">₹{{ '%.0f'|format(metrics['total_sales']) }}</div>
+    <div style="font-size: 11px; color: #16a34a; margin-top: 4px;">Direct vendor earnings</div>
+  </div>
+</div>
+
+<!-- Quick Action Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <div class="vendor-panel-card" style="padding: 20px;">
+    <div style="display: flex; gap: 14px; align-items: flex-start;">
+      <span style="font-size: 28px;">📦</span>
+      <div>
+        <h3 style="font-size: 15px; font-weight: 800; color: #0f172a;">Catalog & Products</h3>
+        <p style="font-size: 12px; color: #64748b; margin: 4px 0 12px;">Create new grocery listings, define multiple pack sizes, and review approval feedback.</p>
+        <div style="display: flex; gap: 8px;">
+          <a href="/vendor/products" class="btn-add" style="width: auto; height: 32px; padding: 0 14px; font-size: 11px;">View Listings</a>
+          <a href="/vendor/products/new" class="btn-action-restock" style="text-decoration: none;">+ Add Product</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vendor-panel-card" style="padding: 20px;">
+    <div style="display: flex; gap: 14px; align-items: flex-start;">
+      <span style="font-size: 28px;">⚡</span>
+      <div>
+        <h3 style="font-size: 15px; font-weight: 800; color: #0f172a;">Stock Availability</h3>
+        <p style="font-size: 12px; color: #64748b; margin: 4px 0 12px;">Rapidly toggle variants between In Stock and Out of Stock when daily farm supplies change.</p>
+        <a href="/vendor/inventory" class="btn-add" style="width: auto; height: 32px; padding: 0 14px; font-size: 11px;">Open Stock Manager &rarr;</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Orders Table for this Vendor -->
+<div class="vendor-panel-card">
+  <div class="vendor-panel-header">
+    <h2 class="vendor-panel-title">Recent Order Items Assigned to {{ vendor['business_name'] }}</h2>
+    <a href="/vendor/orders" style="font-size: 12px; font-weight: 700; color: #16a34a; text-decoration: none;">View All Orders &rarr;</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vendor-inventory-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Customer & Locality</th>
+          <th>Product & Pack</th>
+          <th>Qty</th>
+          <th>Amount</th>
+          <th>Fulfillment</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if recent_orders %}
+          {% for itm in recent_orders %}
+          <tr>
+            <td style="font-weight: 800; color: #0f172a;">{{ itm['order_number'] }}</td>
+            <td>
+              <strong>{{ itm['customer_name'] }}</strong><br>
+              <span style="color: #64748b; font-size: 11px;">📍 {{ itm['locality'] }}</span>
+            </td>
+            <td>
+              <strong>{{ itm['product_name'] }}</strong><br>
+              <span style="color: #64748b; font-size: 11px;">{{ itm['pack_size'] }}</span>
+            </td>
+            <td style="font-weight: 700;">{{ itm['quantity'] }}x</td>
+            <td style="font-weight: 800; color: #16a34a;">₹{{ '%.0f'|format(itm['subtotal']) }}</td>
+            <td>
+              <span class="stock-badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                ● {{ itm['fulfillment_status'] }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <form action="/vendor/orders/{{ itm['id'] }}/status" method="POST" style="display: inline-block;">
+                <select name="status" onchange="this.form.submit()" style="font-size: 11px; padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                  <option value="Pending" {% if itm['fulfillment_status'] == 'Pending' %}selected{% endif %}>Pending</option>
+                  <option value="Accepted" {% if itm['fulfillment_status'] == 'Accepted' %}selected{% endif %}>Accepted</option>
+                  <option value="Preparing" {% if itm['fulfillment_status'] == 'Preparing' %}selected{% endif %}>Preparing</option>
+                  <option value="Ready for Pickup" {% if itm['fulfillment_status'] == 'Ready for Pickup' %}selected{% endif %}>Ready for Pickup</option>
+                  <option value="Dispatched" {% if itm['fulfillment_status'] == 'Dispatched' %}selected{% endif %}>Dispatched</option>
+                </select>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 30px; color: #64748b;">
+              No order activity for your store yet. Once customers order your products, items will appear here for packing.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

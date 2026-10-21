@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block portal_content %}
+<!-- Vendor Sub Navigation -->
+<div class="vendor-nav-subbar">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <span style="font-size: 16px;">🏪</span>
+    <span style="font-weight: 800; font-size: 14px; color: #0f172a;">{{ vendor['business_name'] }}</span>
+  </div>
+  <div class="vendor-nav-links">
+    <a href="/vendor/dashboard" class="v-link">Dashboard</a>
+    <a href="/vendor/products" class="v-link">My Products</a>
+    <a href="/vendor/products/new" class="v-link">+ Add Product</a>
+    <a href="/vendor/inventory" class="v-link">Inventory / Stock</a>
+    <a href="/vendor/orders" class="v-link active">My Orders</a>
+    <a href="/vendor/profile" class="v-link">Store Profile</a>
+    <a href="/vendor/logout" class="v-link" style="color: #ef4444;">Logout</a>
+  </div>
+</div>
+
+<div class="vendor-header-card" style="margin-top: 16px;">
+  <div class="vendor-header-text">
+    <h1 class="vendor-title">Vendor Orders & Packing Dispatch</h1>
+    <p class="vendor-subtitle">
+      Items assigned to {{ vendor['business_name'] }} for fulfillment across Hospete localities.
+    </p>
+  </div>
+  <div style="font-size: 13px; font-weight: 700; color: #16a34a; background: #ecfdf5; border: 1px solid #bbf7d0; padding: 8px 16px; border-radius: 8px;">
+    ⚡ Total Items: {{ orders|length }}
+  </div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div style="margin-bottom: 20px;">
+      {% for category, message in messages %}
+        <div class="vendor-flash-box flash-{{ category }}">
+          <span>{% if category == 'warning' %}⚠️{% elif category == 'error' %}❌{% else %}✅{% endif %}</span>
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Orders List -->
+<div class="vendor-panel-card">
+  <div class="vendor-panel-header">
+    <h2 class="vendor-panel-title">Assigned Customer Order Items</h2>
+    <div style="font-size: 12px; color: #64748b;">
+      Only items from your inventory appear here. You cannot see other vendors' items.
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vendor-inventory-table">
+      <thead>
+        <tr>
+          <th>Order ID & Date</th>
+          <th>Customer Info</th>
+          <th>Delivery Address</th>
+          <th>Item & Pack Size</th>
+          <th>Qty</th>
+          <th>Item Subtotal</th>
+          <th>Payment</th>
+          <th>Fulfillment State</th>
+          <th style="text-align: right; padding-right: 20px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if orders %}
+          {% for itm in orders %}
+          <tr>
+            <td style="font-weight: 800; color: #0f172a;">
+              {{ itm['order_number'] }}<br>
+              <small style="color: #94a3b8; font-weight: normal;">{{ itm['created_at'] }}</small>
+            </td>
+
+            <td>
+              <strong>{{ itm['customer_name'] }}</strong><br>
+              <small style="color: #64748b;">📞 {{ itm['phone'] }}</small>
+            </td>
+
+            <td style="max-width: 180px;">
+              <span style="font-weight: 600; color: #0f172a;">{{ itm['locality'] }}</span><br>
+              <small style="color: #64748b;">{{ itm['delivery_address'] }}</small>
+            </td>
+
+            <td>
+              <strong>{{ itm['product_name'] }}</strong><br>
+              <span style="font-size: 11px; color: #64748b;">{{ itm['pack_size'] }}</span>
+            </td>
+
+            <td style="font-weight: 700;">{{ itm['quantity'] }}x</td>
+
+            <td style="font-weight: 800; color: #16a34a; font-size: 14px;">
+              ₹{{ '%.0f'|format(itm['subtotal']) }}
+            </td>
+
+            <td style="font-size: 11px; color: #64748b;">
+              {{ itm['payment_method'] }}
+            </td>
+
+            <td>
+              {% if itm['fulfillment_status'] == 'Dispatched' %}
+                <span class="stock-badge" style="background: #ecfdf5; color: #15803d; border: 1px solid #bbf7d0;">
+                  ● Dispatched
+                </span>
+              {% elif itm['fulfillment_status'] == 'Ready for Pickup' %}
+                <span class="stock-badge" style="background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7;">
+                  ● Ready for Pickup
+                </span>
+              {% elif itm['fulfillment_status'] == 'Preparing' %}
+                <span class="stock-badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;">
+                  ● Preparing
+                </span>
+              {% elif itm['fulfillment_status'] == 'Accepted' %}
+                <span class="stock-badge" style="background: #fefce8; color: #ca8a04; border: 1px solid #fef08a;">
+                  ● Accepted
+                </span>
+              {% else %}
+                <span class="stock-badge stock-low">
+                  ● Pending
+                </span>
+              {% endif %}
+            </td>
+
+            <td style="text-align: right; padding-right: 20px;">
+              <form action="/vendor/orders/{{ itm['id'] }}/status" method="POST" style="display: inline-block;">
+                <select name="status" onchange="this.form.submit()" style="font-size: 11px; padding: 5px 8px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; font-weight: 600; cursor: pointer;">
+                  <option value="Pending" {% if itm['fulfillment_status'] == 'Pending' %}selected{% endif %}>Pending</option>
+                  <option value="Accepted" {% if itm['fulfillment_status'] == 'Accepted' %}selected{% endif %}>Accept</option>
+                  <option value="Preparing" {% if itm['fulfillment_status'] == 'Preparing' %}selected{% endif %}>Preparing</option>
+                  <option value="Ready for Pickup" {% if itm['fulfillment_status'] == 'Ready for Pickup' %}selected{% endif %}>Ready for Pickup</option>
+                  <option value="Dispatched" {% if itm['fulfillment_status'] == 'Dispatched' %}selected{% endif %}>Dispatched</option>
+                </select>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 40px; color: #64748b;">
+              <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+              <h3 style="font-size: 15px; font-weight: 700; color: #0f172a;">No orders received yet</h3>
+              <p style="font-size: 12px; color: #64748b;">
+                Customer orders containing items from your store will appear here for preparation.
+              </p>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

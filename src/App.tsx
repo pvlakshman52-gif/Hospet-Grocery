@@ -31,8 +31,10 @@ import {
   PackageCheck,
   AlertCircle
 } from 'lucide-react';
-import { CATEGORIES, INITIAL_PRODUCTS, LOCALITIES } from './data.ts';
-import { CartItem, Order, Product, ProductVariant } from './types.ts';
+import { CATEGORIES, INITIAL_PRODUCTS, INITIAL_VENDORS, LOCALITIES, INITIAL_CATALOG_AUDIT_LOGS } from './data.ts';
+import { CartItem, Order, Product, ProductVariant, Vendor, AdminPreviewLog, CatalogAuditLog } from './types.ts';
+import { VendorPortal } from './components/VendorPortal.tsx';
+import { AdminPortal } from './components/AdminPortal.tsx';
 
 type AppTab = 'home' | 'categories' | 'search' | 'orders' | 'account';
 type RoleView = 'customer' | 'admin' | 'vendor' | 'delivery' | 'deliverables';
@@ -43,12 +45,40 @@ export default function App() {
   const [isMobileFrame, setIsMobileFrame] = useState(true);
 
   // Data states
+  const [vendors, setVendors] = useState<Vendor[]>(INITIAL_VENDORS);
+  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(INITIAL_VENDORS[0]);
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [selectedLocality, setSelectedLocality] = useState(LOCALITIES[1]); // Patel Nagar
   const [searchQuery, setSearchQuery] = useState('');
   const [activeShortcut, setActiveShortcut] = useState<'all' | 'offers' | 'bestsellers' | 'fresh' | 'bulk'>('all');
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
   const [vendorNotice, setVendorNotice] = useState<{ text: string; type: 'warning' | 'success' } | null>(null);
+
+  // Admin Preview State & Audit Logs
+  const [adminPreviewState, setAdminPreviewState] = useState<{
+    isPreview: boolean;
+    vendorId: number | null;
+    safeMode: boolean;
+  }>({
+    isPreview: false,
+    vendorId: null,
+    safeMode: true
+  });
+
+  const [adminPreviewLogs, setAdminPreviewLogs] = useState<AdminPreviewLog[]>([
+    {
+      id: 'log-init-1',
+      adminIdentifier: 'superadmin@hospetegrocery.in',
+      vendorId: 1,
+      vendorName: 'Tungabhadra Agro & Organics',
+      action: 'ENTER_PREVIEW',
+      notes: 'Initial operational audit inspection of inventory variants.',
+      timestamp: '2026-03-16 10:15'
+    }
+  ]);
+
+  const [catalogAuditLogs, setCatalogAuditLogs] = useState<CatalogAuditLog[]>(INITIAL_CATALOG_AUDIT_LOGS);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Cart state: keyed by variantId
   const [cart, setCart] = useState<Record<number, CartItem>>({});
@@ -141,6 +171,37 @@ export default function App() {
   // Place order
   const handlePlaceOrder = () => {
     if (cartItemList.length === 0) return;
+    setCheckoutError(null);
+
+    // Revalidate items against current catalog & vendor state
+    for (const item of cartItemList) {
+      const prod = products.find(p => p.id === item.productId);
+      if (!prod) {
+        setCheckoutError(`Product "${item.name}" is no longer available in the catalog.`);
+        return;
+      }
+      if (prod.approvalStatus !== 'approved') {
+        setCheckoutError(`Product "${item.name}" is currently awaiting approval or rejected.`);
+        return;
+      }
+      if (prod.isActive === false) {
+        setCheckoutError(`Product "${item.name}" is currently marked inactive/hidden by store administration.`);
+        return;
+      }
+      if (prod.vendorId) {
+        const v = vendors.find(vend => vend.id === prod.vendorId);
+        if (v && v.status !== 'approved') {
+          setCheckoutError(`Supplier "${v.businessName}" for "${item.name}" is currently ${v.status}. New orders cannot be fulfilled.`);
+          return;
+        }
+      }
+      const variant = prod.variants.find(vr => vr.id === item.variantId);
+      if (!variant || variant.stockQty < item.qty) {
+        setCheckoutError(`Item "${item.name}" (${item.packSize}) only has ${variant?.stockQty ?? 0} units left in stock.`);
+        return;
+      }
+    }
+
     const orderNum = `HF-${Math.floor(10000 + Math.random() * 90000)}`;
     const newOrder: Order = {
       id: Date.now(),
@@ -167,9 +228,21 @@ export default function App() {
     setActiveTab('orders');
   };
 
-  // Filter products for Customer Home
+  // Filter products for Customer Home (Only approved products from approved vendors!)
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
+      // Check product approval status
+      if (p.approvalStatus && p.approvalStatus !== 'approved') return false;
+
+      // Check product active / storefront visibility toggle
+      if (p.isActive === false) return false;
+
+      // Check vendor status if assigned
+      if (p.vendorId) {
+        const v = vendors.find(vend => vend.id === p.vendorId);
+        if (v && v.status !== 'approved') return false;
+      }
+
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const matches =
@@ -190,10 +263,10 @@ export default function App() {
       if (activeShortcut === 'bulk') return p.isBulk;
       return true;
     });
-  }, [products, searchQuery, selectedCategorySlug, activeShortcut]);
+  }, [products, vendors, searchQuery, selectedCategorySlug, activeShortcut]);
 
   // Flash deals
-  const deals = useMemo(() => products.filter(p => p.isDeal), [products]);
+  const deals = useMemo(() => filteredProducts.filter(p => p.isDeal), [filteredProducts]);
 
   // Fallback image helper
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, label: string) => {
@@ -1377,6 +1450,13 @@ export default function App() {
                 </div>
               </div>
 
+              {checkoutError && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span>{checkoutError}</span>
+                </div>
+              )}
+
               <button
                 onClick={handlePlaceOrder}
                 className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-sm rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all"
@@ -1393,251 +1473,62 @@ export default function App() {
           VIEW 2: ADMIN MANAGEMENT PORTAL (Full wide desktop layout)
           ========================================================================= */}
       {roleView === 'admin' && (
-        <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-            <div>
-              <h1 className="text-2xl font-black text-slate-900">Admin Management Console</h1>
-              <p className="text-xs text-slate-500 mt-1">
-                Full-width desktop view for Hospete Fresh supermarket metrics, orders, and sales dispatch.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setRoleView('customer')}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg"
-              >
-                Open Mobile App &rarr;
-              </button>
-              <button
-                onClick={() => setRoleView('deliverables')}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download Flask Project ZIP</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-              <div className="text-xs font-bold text-slate-400 uppercase">Total Revenue</div>
-              <div className="text-2xl font-black text-emerald-600 mt-1">₹48,250</div>
-              <div className="text-[11px] text-slate-500 mt-1">⚡ 100% locally fulfilled in Hospete</div>
-            </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-              <div className="text-xs font-bold text-slate-400 uppercase">Orders Today</div>
-              <div className="text-2xl font-black text-slate-900 mt-1">{orders.length + 18}</div>
-              <div className="text-[11px] text-slate-500 mt-1">Avg turnaround: 18 mins</div>
-            </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-              <div className="text-xs font-bold text-slate-400 uppercase">Active Catalog</div>
-              <div className="text-2xl font-black text-slate-900 mt-1">{products.length} Products</div>
-              <div className="text-[11px] text-slate-500 mt-1">8 local categories seeded</div>
-            </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-              <div className="text-xs font-bold text-slate-400 uppercase">Active Delivery Localities</div>
-              <div className="text-2xl font-black text-slate-900 mt-1">8 Hubs</div>
-              <div className="text-[11px] text-slate-500 mt-1">College Rd, Patel Nagar, Dam Rd...</div>
-            </div>
-          </div>
-
-          {/* Orders Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-            <div className="p-4 border-b border-slate-200 font-extrabold text-sm text-slate-900">
-              Live Customer Orders
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
-                  <tr>
-                    <th className="p-3">Order ID</th>
-                    <th className="p-3">Customer</th>
-                    <th className="p-3">Locality</th>
-                    <th className="p-3">Items</th>
-                    <th className="p-3">Amount</th>
-                    <th className="p-3">Payment</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {orders.map(ord => (
-                    <tr key={ord.id} className="hover:bg-slate-50/50">
-                      <td className="p-3 font-bold text-slate-900">{ord.orderNumber}</td>
-                      <td className="p-3">
-                        <div className="font-semibold text-slate-800">{ord.customerName}</div>
-                        <div className="text-slate-400 text-[10px]">{ord.phone}</div>
-                      </td>
-                      <td className="p-3">{ord.locality}</td>
-                      <td className="p-3">
-                        {ord.items.map(it => `${it.quantity}x ${it.productName}`).join(', ')}
-                      </td>
-                      <td className="p-3 font-black text-emerald-700">₹{ord.totalAmount}</td>
-                      <td className="p-3">{ord.paymentMethod}</td>
-                      <td className="p-3">
-                        <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">
-                          {ord.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <AdminPortal
+          vendors={vendors}
+          setVendors={setVendors}
+          products={products}
+          setProducts={setProducts}
+          orders={orders}
+          setOrders={setOrders}
+          onOpenMobileApp={() => setRoleView('customer')}
+          onOpenDeliverables={() => setRoleView('deliverables')}
+          adminPreviewLogs={adminPreviewLogs}
+          setAdminPreviewLogs={setAdminPreviewLogs}
+          catalogAuditLogs={catalogAuditLogs}
+          setCatalogAuditLogs={setCatalogAuditLogs}
+          onPreviewProductInStore={(p) => {
+            setSearchQuery(p.name);
+            setRoleView('customer');
+            setActiveTab('home');
+          }}
+          onSelectVendorToTest={(v, options) => {
+            setAdminPreviewState({
+              isPreview: true,
+              vendorId: v.id,
+              safeMode: options?.safeMode ?? true
+            });
+            setCurrentVendor(v);
+            setRoleView('vendor');
+          }}
+        />
       )}
 
       {/* =========================================================================
-          VIEW 3: VENDOR INVENTORY MANAGER (Full wide desktop layout)
-          ========================================================================= */}
-      {/* =========================================================================
-          VIEW 3: VENDOR INVENTORY & STOCK MANAGER (Full wide desktop layout)
+          VIEW 3: VENDOR INVENTORY & ONBOARDING PORTAL (Full wide desktop layout)
           ========================================================================= */}
       {roleView === 'vendor' && (
-        <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-          {/* White Header Card matching the visual reference */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                Vendor Inventory & Stock Manager
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Real-time stock adjustment for Hospete farmers, dairy suppliers, and snacks makers.
-              </p>
-            </div>
-            <button
-              onClick={() => setRoleView('customer')}
-              className="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2"
-            >
-              <span>Test in Mobile Store</span>
-              <span className="text-base">&rarr;</span>
-            </button>
-          </div>
-
-          {/* Flash Feedback Notice */}
-          {vendorNotice && (
-            <div
-              className={`p-3.5 rounded-xl text-xs font-semibold flex items-center justify-between border shadow-xs animate-in fade-in duration-200 ${
-                vendorNotice.type === 'warning'
-                  ? 'bg-amber-50 text-amber-900 border-amber-200'
-                  : 'bg-emerald-50 text-emerald-900 border-emerald-200'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span>{vendorNotice.type === 'warning' ? '⚠️' : '✅'}</span>
-                <span>{vendorNotice.text}</span>
-              </div>
-              <button
-                onClick={() => setVendorNotice(null)}
-                className="text-xs font-bold opacity-60 hover:opacity-100"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
-          {/* Inventory Section: White rounded panel titled Product Variants & Stock Inventory */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-            <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
-              <div className="flex items-center gap-2.5">
-                <h2 className="font-black text-sm sm:text-base text-slate-900">
-                  Product Variants & Stock Inventory
-                </h2>
-                <span className="text-[11px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200">
-                  {products.reduce((acc, p) => acc + p.variants.length, 0)} variants listed
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Click <strong>Set Out of Stock</strong> to immediately disallow customer purchases.
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200 tracking-wider">
-                  <tr>
-                    <th className="p-3 sm:p-4 min-w-[200px]">Product Name</th>
-                    <th className="p-3 sm:p-4 min-w-[130px]">Brand</th>
-                    <th className="p-3 sm:p-4 min-w-[120px]">Pack Size</th>
-                    <th className="p-3 sm:p-4 min-w-[110px]">Selling Price</th>
-                    <th className="p-3 sm:p-4 min-w-[100px]">MRP</th>
-                    <th className="p-3 sm:p-4 min-w-[130px]">Stock Units</th>
-                    <th className="p-3 sm:p-4 text-right pr-6 min-w-[140px]">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {products.flatMap(p =>
-                    p.variants.map(v => (
-                      <tr
-                        key={v.id}
-                        className={`hover:bg-slate-50/70 transition-colors ${
-                          v.stockQty <= 0 ? 'bg-rose-50/30' : ''
-                        }`}
-                      >
-                        <td className="p-3 sm:p-4 font-bold text-slate-900">{p.name}</td>
-                        <td className="p-3 sm:p-4 text-slate-500 font-medium">{p.brand}</td>
-                        <td className="p-3 sm:p-4 font-bold text-slate-800">{v.packSize}</td>
-                        <td className="p-3 sm:p-4 font-black text-emerald-700 text-sm">₹{v.price}</td>
-                        <td className="p-3 sm:p-4 text-slate-400 line-through">₹{v.mrp}</td>
-                        <td className="p-3 sm:p-4">
-                          {v.stockQty <= 0 ? (
-                            <span className="text-rose-700 font-bold bg-rose-100/80 border border-rose-200 px-2 py-0.5 rounded text-[11px] inline-block">
-                              0 (Out of Stock)
-                            </span>
-                          ) : v.stockQty <= 5 ? (
-                            <span className="text-amber-700 font-bold bg-amber-100/80 border border-amber-200 px-2 py-0.5 rounded text-[11px] inline-block">
-                              {v.stockQty} (Low)
-                            </span>
-                          ) : (
-                            <span className="text-emerald-700 font-bold text-xs">
-                              {v.stockQty} in stock
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3 sm:p-4 text-right pr-6">
-                          <button
-                            onClick={() => {
-                              const newStock = v.stockQty > 0 ? 0 : 50;
-                              setProducts(prev =>
-                                prev.map(prod =>
-                                  prod.id === p.id
-                                    ? {
-                                        ...prod,
-                                        variants: prod.variants.map(vari =>
-                                          vari.id === v.id
-                                            ? { ...vari, stockQty: newStock }
-                                            : vari
-                                        )
-                                      }
-                                    : prod
-                                )
-                              );
-                              setVendorNotice({
-                                text:
-                                  newStock === 0
-                                    ? `'${p.name} (${v.packSize})' marked Out of Stock. Customer ordering is now disabled.`
-                                    : `'${p.name} (${v.packSize})' restocked with 50 units. Customers can now order.`,
-                                type: newStock === 0 ? 'warning' : 'success'
-                              });
-                            }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 whitespace-nowrap ${
-                              v.stockQty > 0
-                                ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
-                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
-                            }`}
-                          >
-                            {v.stockQty > 0 ? 'Set Out of Stock' : 'Restock 50'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <VendorPortal
+          vendors={vendors}
+          setVendors={setVendors}
+          products={products}
+          setProducts={setProducts}
+          orders={orders}
+          setOrders={setOrders}
+          currentVendor={currentVendor}
+          setCurrentVendor={setCurrentVendor}
+          onTestInMobileStore={() => setRoleView('customer')}
+          categories={CATEGORIES}
+          localities={LOCALITIES}
+          isAdminPreview={adminPreviewState.isPreview}
+          adminSafeMode={adminPreviewState.safeMode}
+          onExitAdminPreview={() => {
+            setAdminPreviewState({ isPreview: false, vendorId: null, safeMode: true });
+            setRoleView('admin');
+          }}
+          onToggleAdminSafeMode={() => {
+            setAdminPreviewState(prev => ({ ...prev, safeMode: !prev.safeMode }));
+          }}
+        />
       )}
 
       {/* =========================================================================

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block portal_content %}
+<div style="max-width: 440px; margin: 40px auto; padding: 0 10px;">
+  <div style="text-align: center; margin-bottom: 24px;">
+    <span class="brand-badge" style="font-size: 13px; padding: 5px 10px;">HOSPETE FRESH</span>
+    <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 12px 0 4px;">Vendor Partner Login</h1>
+    <p style="font-size: 13px; color: #64748b;">Access your store catalog, real-time inventory, and assigned customer orders.</p>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div style="margin-bottom: 18px;">
+        {% for category, message in messages %}
+          <div class="vendor-flash-box flash-{{ category }}">
+            <span>{% if category == 'warning' %}⚠️{% elif category == 'error' %}❌{% else %}✅{% endif %}</span>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="vendor-panel-card" style="padding: 28px;">
+    <form action="/vendor/login" method="POST">
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+          Registered Mobile Number or Email
+        </label>
+        <input type="text" name="identifier" required placeholder="10-digit mobile or email" value="9845011111" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+          Password
+        </label>
+        <input type="password" name="password" required placeholder="Enter your password" value="vendor123" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 12px; font-size: 13px;">
+      </div>
+
+      <button type="submit" class="btn-add" style="width: 100%; height: 44px; font-size: 14px; border-radius: 10px;">
+        Log In to Vendor Portal &rarr;
+      </button>
+
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #64748b;">
+        New grocery partner or farmer? <br>
+        <a href="/vendor/register" style="color: #16a34a; font-weight: 700; text-decoration: none; display: inline-block; margin-top: 4px;">
+          Create a Vendor Account &rarr;
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <div style="margin-top: 16px; text-align: center;">
+    <a href="/" style="font-size: 12px; color: #64748b; text-decoration: none;">&larr; Return to Customer Storefront</a>
+  </div>
+</div>
+{% endblock %}

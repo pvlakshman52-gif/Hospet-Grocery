@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block portal_content %}
+<!-- Vendor Sub Navigation -->
+<div class="vendor-nav-subbar">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <span style="font-size: 16px;">🏪</span>
+    <span style="font-weight: 800; font-size: 14px; color: #0f172a;">{{ vendor['business_name'] }}</span>
+  </div>
+  <div class="vendor-nav-links">
+    <a href="/vendor/dashboard" class="v-link">Dashboard</a>
+    <a href="/vendor/products" class="v-link active">My Products</a>
+    <a href="/vendor/products/new" class="v-link">+ Add Product</a>
+    <a href="/vendor/inventory" class="v-link">Inventory / Stock</a>
+    <a href="/vendor/orders" class="v-link">My Orders</a>
+    <a href="/vendor/profile" class="v-link">Store Profile</a>
+    <a href="/vendor/logout" class="v-link" style="color: #ef4444;">Logout</a>
+  </div>
+</div>
+
+<div class="vendor-header-card" style="margin-top: 16px;">
+  <div class="vendor-header-text">
+    <h1 class="vendor-title">My Product Catalog</h1>
+    <p class="vendor-subtitle">
+      Manage all grocery products, pack size variants, pricing, and moderation status for {{ vendor['business_name'] }}.
+    </p>
+  </div>
+  <a href="/vendor/products/new" class="btn-add" style="width: auto; height: 38px; padding: 0 16px; font-size: 13px;">
+    + Add New Product
+  </a>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div style="margin-bottom: 20px;">
+      {% for category, message in messages %}
+        <div class="vendor-flash-box flash-{{ category }}">
+          <span>{% if category == 'warning' %}⚠️{% elif category == 'error' %}❌{% else %}✅{% endif %}</span>
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Products List -->
+<div class="vendor-panel-card">
+  <div class="vendor-panel-header">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h2 class="vendor-panel-title">Your Store Listings</h2>
+      <span class="vendor-variant-badge">{{ products|length }} products</span>
+    </div>
+    <div style="font-size: 12px; color: #64748b;">
+      Only <strong>Approved</strong> listings appear on the Hospete Fresh customer store.
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vendor-inventory-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Pack Variants</th>
+          <th>Price Range</th>
+          <th>Total Stock</th>
+          <th>Moderation Status</th>
+          <th style="text-align: right; padding-right: 24px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if products %}
+          {% for p in products %}
+          <tr class="{% if p['approval_status'] == 'rejected' %}row-out-of-stock{% endif %}">
+            <td class="cell-product-name">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="{{ p['image_url'] }}" alt="{{ p['name'] }}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc;">
+                <div>
+                  <strong>{{ p['name'] }}</strong><br>
+                  <span style="font-size: 11px; color: #64748b;">Brand: {{ p['brand'] }} {% if p['sku'] %}• SKU: {{ p['sku'] }}{% endif %}</span>
+                </div>
+              </div>
+            </td>
+
+            <td class="cell-brand">
+              <span style="font-weight: 600; text-transform: capitalize;">{{ p['category_slug'] }}</span>
+            </td>
+
+            <td class="cell-pack-size">
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                {% for v in p['variants'] %}
+                  <span style="font-size: 11px; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 1px 6px; border-radius: 4px;">
+                    {{ v['pack_size'] }}
+                  </span>
+                {% endfor %}
+              </div>
+            </td>
+
+            <td class="cell-selling-price">
+              {% if p['variants']|length == 1 %}
+                ₹{{ '%.0f'|format(p['variants'][0]['price']) }}
+              {% elif p['variants']|length > 1 %}
+                ₹{{ '%.0f'|format(p['variants'][0]['price']) }} - ₹{{ '%.0f'|format(p['variants'][-1]['price']) }}
+              {% endif %}
+            </td>
+
+            <td class="cell-stock-units">
+              {% set total_stock = p['variants']|sum(attribute='stock_qty') %}
+              {% if total_stock <= 0 %}
+                <span class="stock-badge stock-out">0 (Out of Stock)</span>
+              {% elif total_stock <= 10 %}
+                <span class="stock-badge stock-low">{{ total_stock }} units (Low)</span>
+              {% else %}
+                <span class="stock-text-available">{{ total_stock }} units</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if p['approval_status'] == 'approved' %}
+                <span class="stock-badge" style="background: #ecfdf5; color: #15803d; border: 1px solid #bbf7d0;">
+                  ✓ Approved
+                </span>
+              {% elif p['approval_status'] == 'pending' %}
+                <span class="stock-badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a;">
+                  ⏳ Pending Approval
+                </span>
+              {% elif p['approval_status'] == 'rejected' %}
+                <div>
+                  <span class="stock-badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+                    ✕ Rejected
+                  </span>
+                  {% if p['rejection_reason'] %}
+                    <div style="font-size: 10px; color: #dc2626; margin-top: 3px; max-width: 180px;">
+                      Reason: {{ p['rejection_reason'] }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </td>
+
+            <td style="text-align: right; padding-right: 24px;">
+              <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                <a href="/vendor/products/{{ p['id'] }}/edit" class="btn-action-restock" style="text-decoration: none; font-size: 11px; padding: 5px 10px;">
+                  Edit
+                </a>
+                {% if p['approval_status'] == 'approved' %}
+                  <a href="/product/{{ p['id'] }}" target="_blank" class="btn-action-out" style="background: #f1f5f9 !important; color: #334155 !important; border-color: #cbd5e1 !important; text-decoration: none; font-size: 11px; padding: 5px 10px;">
+                    View &rarr;
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">
+              <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+              <h3 style="font-size: 15px; font-weight: 700; color: #0f172a;">No products added yet</h3>
+              <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">
+                Start listing your fresh groceries, farm produce, or snacks.
+              </p>
+              <a href="/vendor/products/new" class="btn-add" style="display: inline-flex; width: auto; padding: 8px 18px; font-size: 12px;">
+                + Add Your First Product
+              </a>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

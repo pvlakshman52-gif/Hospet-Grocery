@@ -1,51 +1,46 @@
 # Hospete Fresh - Mobile Grocery Shopping Application & Vendor Marketplace
 
-A clean, modern grocery-commerce web application for Hospete, Karnataka, built with Flask, SQLite, HTML5, modern CSS3, and JavaScript.
+A clean, modern grocery-commerce web application and vendor management portal for Hospete, Karnataka, built with Flask, SQLite, HTML5, modern CSS3, and JavaScript.
 
-## 🚀 Key Fixes & Features in this Version
+## 🚀 Key Modules & Capabilities
 
-1. **Vendor Inventory & Stock Manager (Reference Matched)**:
-   - **White Header Card**: Heading **Vendor Inventory & Stock Manager**, subtitle, and green **Test in Mobile Store &rarr;** button linking directly to `/`.
-   - **White Rounded Panel**: Titled **Product Variants & Stock Inventory** with total variant count badge.
-   - **Variant-Based Rows**: Every pack size (e.g., 500g, 1kg, 2kg) displays as an independent inventory row with Product Name (bold), Brand (muted), Pack Size (bold), Selling Price (green), MRP (strikethrough), and Stock Units (green available, amber low, red out-of-stock badge).
-   - **Stock Actions**:
-     - **Set Out of Stock**: Instantly zeroes variant stock in SQLite (`stock_qty = 0`) with confirmation and flash notification.
-     - **Restock 50**: Instantly restores variant stock in SQLite (`stock_qty = 50`) so customers can purchase again.
-   - **Customer Storefront Protection**: Out-of-stock items are automatically disabled in customer product cards and blocked on the server in `/add-to-cart`.
-   - **Full Desktop Layout**: Vendor `/vendor`, Admin `/admin`, and Delivery `/delivery` screens bypass mobile shell constraints and use full responsive desktop width.
+### 1. Vendor Onboarding, Registration & Authentication Module
+- **Vendor Registration**: Responsive registration page (`/vendor/register`) with business name, owner name, 10-digit mobile number, email, business type (Farmer, Dairy, Snacks, Grocery, Other), Hospete base locality, delivery service area, address, secure password hashing, and clear validation.
+- **Pending Approval Workflow**: Registered vendors automatically enter **Pending Approval** status. Pending or rejected vendors cannot publish live items or accept customer orders.
+- **Telecom Notice**: Explicit notice on carrier phone verification noting SMS OTP gateway is slated for future carrier integration.
+- **Secure Authentication & Session Protection**: Login (`/vendor/login`) and logout (`/vendor/logout`) routes protected with `@vendor_required` authorization decorators.
+- **Multi-Vendor Role Scoping**: Vendors can strictly only access, view, and modify their own catalog products, inventory, and assigned orders.
 
-2. **Fixed Product-Card ADD Button**:
-   - Resolved conflicting CSS rules where `.btn` was styled as white with green text.
-   - High-specificity `.btn-add` rule applied: vibrant `#16a34a` grocery-green background with `#ffffff` text and icon.
-   - Full hover state (`#15803d`), active touch states, and disabled grey styling when stock is exhausted.
+### 2. Vendor Product & Dynamic Variant Management
+- **Add New Product Listing** (`/vendor/products/new`): Name, category, brand, description, image, SKU, and dynamic pack-variant builder.
+- **Multi-Pack Variant Support**: Add multiple pack sizes (e.g. 500g, 1kg, 2kg Family Pack) with independent Selling Price (₹), MRP (₹), stock units, and default flag.
+- **Edit Existing Products & Variants** (`/vendor/products/<id>/edit`): Re-save prices, add variants, or update descriptions with automatic re-validation.
 
-3. **Customer Home Screen Reference Sequence**:
-   - 1. App header with delivery location dropdown (Patel Nagar, College Rd, Amaravathi, etc.) and ETA.
-   - 2. Search bar with instant suggestions.
-   - 3. Full promotional grocery banner (Tungabhadra Harvest Fest, code HOSPETE30).
-   - 4. Four shortcuts: Offers, Best Sellers, Fresh Farm, Bulk Packs.
-   - 5. "Shop by Category" with "See All".
-   - 6. Four-column category tile grid with icons and badges.
-   - 7. "Today's Flash Deals" horizontal scrollable product cards.
-   - 8. Compact 2-column grocery product cards with stock status and green Add buttons.
-   - 9. Fixed 5-tab bottom navigation (Home, Categories, Search, Orders, Account).
-   - 10. Non-intrusive floating basket summary bar.
+### 3. Vendor Inventory & Stock Manager (Visual Reference Matched)
+- **Header Card**: Heading **Vendor Inventory & Stock Manager**, subtitle, and green **Test in Mobile Store &rarr;** button.
+- **White Rounded Panel**: Titled **Product Variants & Stock Inventory** with live variant count badge.
+- **Structured Table**: Product Name (bold), Brand (muted), Pack Size (bold), Selling Price (green), MRP (strikethrough), Stock Units (green available, amber low, red out-of-stock badge).
+- **Instant Stock Actions**:
+  - **Set Out of Stock**: Instantly sets variant `stock_qty = 0` in SQLite.
+  - **Restock 50**: Instantly restores variant stock to `50` units.
+- **Customer Storefront Protection**: Out-of-stock items immediately disable customer ordering and are blocked in `/add-to-cart`.
 
-4. **Centered Mobile Frame on Desktop**:
-   - Customer mobile screens are framed in a sleek 410px mobile shell on desktop monitors.
-   - On actual mobile devices, it smoothly adapts to 100% available viewport width.
+### 4. Administrator Console & Vendor Moderation (`/admin`)
+- **Vendor Applications Review Tab**: View all registered vendors, contact info, business type, and registration status.
+- **Approve, Reject, or Suspend**: Administrators can approve pending vendor applications, reject with feedback reasons, or toggle active/suspended status.
+- **Catalog Moderation**: Review and approve/reject vendor product submissions before they appear in the customer store.
 
-5. **Product Details Page**:
-   - Large, sharp product image.
-   - Back, wishlist heart, and cart counter.
-   - Brand, category, star rating, and review count.
-   - Selectable pack-size cards (e.g., 500g, 1kg, 2kg) that dynamically update price, MRP, discount %, and cart payload.
-   - Quantity stepper (- [qty] +) and green Add to Cart button.
-   - Customer assurance row: 100% Fresh, 20-Min Delivery, Easy Returns, Secure UPI/COD.
-
-6. **Fixed Broken Product Image (Mixture Snacks)**:
-   - Root cause: Missing file and malformed relative image path in SQLite database.
-   - Fixed: Verified static image `mixture_snacks.jpg` in `/static/images/` and resilient SVG fallback in `app.js`.
+### 5. Customer Home Screen Reference Sequence (`/`)
+- 1. Delivery header with Hospete localities (College Rd, Patel Nagar, Dam Rd, Amaravathi, etc.) and ETA.
+- 2. Search bar with instant suggestions.
+- 3. Full promotional grocery banner (Tungabhadra Harvest Fest, code HOSPETE30).
+- 4. Four shortcuts: Offers, Best Sellers, Fresh Farm, Bulk Packs.
+- 5. "Shop by Category" with "See All".
+- 6. Four-column category tile grid with icons and badges.
+- 7. "Today's Flash Deals" horizontal scrollable product cards.
+- 8. Compact 2-column grocery product cards with solid green Add buttons.
+- 9. Fixed 5-tab bottom navigation (Home, Categories, Search, Orders, Account).
+- 10. Floating basket summary bar.
 
 ---
 
@@ -64,7 +59,7 @@ python -m venv venv
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Initialize and seed the SQLite database with full Hospete catalog
+# 4. Initialize and seed the SQLite database with full Hospete catalog and demo accounts
 python init_db.py
 
 # 5. Start the Flask application
@@ -72,7 +67,11 @@ python app.py
 ```
 
 Now open your web browser at:
-- **Vendor Inventory Portal**: http://127.0.0.1:5000/vendor
+- **Vendor Portal**: http://127.0.0.1:5000/vendor
+  - *Demo Approved Farmer*: Phone `9845011111`, Password `vendor123` (Suresh Gowda - Tungabhadra Agro)
+  - *Demo Approved Snacks*: Phone `9845022222`, Password `vendor123` (Prasad Rao - Hospete Sweets)
+  - *Demo Pending Supplier*: Phone `9845033333`, Password `vendor123` (Manjunath K - Bellary Dairy)
+  - *Register New*: http://127.0.0.1:5000/vendor/register
 - **Customer Mobile Storefront**: http://127.0.0.1:5000/
 - **Admin Management Portal**: http://127.0.0.1:5000/admin
 - **Delivery Partner Fleet**: http://127.0.0.1:5000/delivery
